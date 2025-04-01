@@ -53,6 +53,12 @@
 		</dependency>
 
 		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-ui</artifactId>
+			<version>1.7.0</version>
+		</dependency>
+
+		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
 			<optional>true</optional>
@@ -72,6 +78,56 @@
 						</exclude>
 					</excludes>
 				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.openapitools</groupId>
+				<artifactId>openapi-generator-maven-plugin</artifactId>
+				<version>6.6.0</version>
+				<configuration>
+					<generatorName>spring</generatorName>
+					<library>spring-boot</library>
+					<supportingFilesToGenerate>
+						ApiUtil.java
+					</supportingFilesToGenerate>
+					<configOptions>
+						<!-- Do not generate API classes (controllers) -->
+						<generateApis>false</generateApis>
+						<documentationProvider>source</documentationProvider>
+						<annotationLibrary>none</annotationLibrary>
+						<!-- Disable this feature to avoid jackson-databind-nullable dependency -->
+						<openApiNullable>false</openApiNullable>
+						<!-- Use Spring Boot 3 dependencies (especially jakarta instead of javax) -->
+						<useSpringBoot3>true</useSpringBoot3>
+						<!-- We can disable Spring Bean Validation for generated models -->
+						<useBeanValidation>false</useBeanValidation>
+						<delegatePattern>true</delegatePattern>
+					</configOptions>
+				</configuration>
+				<executions>
+					<execution>
+						<id>generate-utilisateurs</id>
+						<goals><goal>generate</goal></goals>
+						<configuration>
+							<inputSpec>
+								${project.basedir}/src/main/resources/openapi/utilisateurs-api.yml
+							</inputSpec>
+							<modelPackage>fr.pmu.matrix.competence.dto</modelPackage>
+							<apiPackage>fr.pmu.matrix.competence.controller</apiPackage>
+						</configuration>
+					</execution>
+					<execution>
+						<id>generate-habilitations</id>
+						<goals><goal>generate</goal></goals>
+						<configuration>
+							<inputSpec>
+								${project.basedir}/src/main/resources/openapi/habilitations-api.yml
+							</inputSpec>
+							<modelPackage>fr.pmu.matrix.competence.dto</modelPackage>
+							<apiPackage>fr.pmu.matrix.competence.controller</apiPackage>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>

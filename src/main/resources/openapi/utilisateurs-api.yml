@@ -1,0 +1,155 @@
+openapi: 3.0.3
+info:
+  title: API Gestion des Utilisateurs
+  description: API permettant la gestion des utilisateurs et leurs habilitations
+  version: 1.0.0
+  contact:
+    name: PMU Matrix Compétence Team
+servers:
+  - url: 'http://localhost:8080'
+    description: Serveur de développement
+
+paths:
+  /utilisateurs:
+    get:
+      summary: Récupérer tous les utilisateurs
+      operationId: getAllUtilisateurs
+      tags:
+        - Utilisateurs
+      responses:
+        '200':
+          description: Liste des utilisateurs récupérée avec succès
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Utilisateur'
+
+    post:
+      summary: Créer un nouvel utilisateur
+      operationId: createUtilisateur
+      tags:
+        - Utilisateurs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUtilisateurRequest'
+      responses:
+        '201':
+          description: Utilisateur créé avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Utilisateur'
+        '409':
+          description: Un utilisateur avec ce matricule existe déjà
+
+  /utilisateurs/{matricule}:
+    parameters:
+      - name: matricule
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Matricule unique de l'utilisateur
+
+    get:
+      summary: Récupérer un utilisateur par son matricule
+      operationId: getUtilisateurByMatricule
+      tags:
+        - Utilisateurs
+      responses:
+        '200':
+          description: Utilisateur récupéré avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Utilisateur'
+
+    put:
+      summary: Mettre à jour les habilitations d'un utilisateur
+      description: Cette opération permet uniquement de modifier la liste des habilitations, pas le matricule
+      operationId: updateUtilisateurHabilitations
+      tags:
+        - Utilisateurs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUtilisateurRequest'
+      responses:
+        '200':
+          description: Utilisateur mis à jour avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Utilisateur'
+
+    delete:
+      summary: Supprimer un utilisateur
+      operationId: deleteUtilisateur
+      tags:
+        - Utilisateurs
+      responses:
+        '204':
+          description: Utilisateur supprimé avec succès
+
+components:
+  schemas:
+    Utilisateur:
+      type: object
+      properties:
+        matricule:
+          type: string
+          description: Identifiant unique de l'utilisateur
+          example: "EMP12345"
+        habilitations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Habilitation'
+          description: Liste des habilitations associées à l'utilisateur
+      required:
+        - matricule
+
+    CreateUtilisateurRequest:
+      type: object
+      properties:
+        matricule:
+          type: string
+          description: Identifiant unique de l'utilisateur
+          example: "EMP12345"
+        habilitationsIds:
+          type: array
+          items:
+            type: string
+          description: Liste des identifiants d'habilitations à associer
+          example: ["HAB1", "HAB2"]
+      required:
+        - matricule
+
+    UpdateUtilisateurRequest:
+      type: object
+      properties:
+        habilitationsIds:
+          type: array
+          items:
+            type: string
+          description: Liste des identifiants d'habilitations à associer
+          example: ["HAB1", "HAB2"]
+      required:
+        - habilitationsIds
+
+    Habilitation:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Identifiant unique de l'habilitation
+          example: "HAB1"
+        # Ajoutez d'autres propriétés si nécessaire pour l'habilitation
+      required:
+        - id

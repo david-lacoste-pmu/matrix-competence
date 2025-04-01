@@ -1,0 +1,137 @@
+openapi: 3.0.3
+info:
+  title: API Gestion des Habilitations
+  description: API permettant la gestion des habilitations
+  version: 1.0.0
+  contact:
+    name: PMU Matrix Compétence Team
+servers:
+  - url: 'http://localhost:8080'
+    description: Serveur de développement
+
+paths:
+  /habilitations:
+    get:
+      summary: Récupérer toutes les habilitations
+      operationId: getAllHabilitations
+      tags:
+        - Habilitations
+      responses:
+        '200':
+          description: Liste des habilitations récupérée avec succès
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Habilitation'
+
+    post:
+      summary: Créer une nouvelle habilitation
+      operationId: createHabilitation
+      tags:
+        - Habilitations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateHabilitationRequest'
+      responses:
+        '201':
+          description: Habilitation créée avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Habilitation'
+
+  /habilitations/{code}:
+    parameters:
+      - name: code
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Code unique de l'habilitation
+
+    get:
+      summary: Récupérer une habilitation par son code
+      operationId: getHabilitationByCode
+      tags:
+        - Habilitations
+      responses:
+        '200':
+          description: Habilitation récupérée avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Habilitation'
+
+    put:
+      summary: Mettre à jour une habilitation
+      description: Cette opération permet de modifier la description de l'habilitation, pas le code
+      operationId: updateHabilitation
+      tags:
+        - Habilitations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateHabilitationRequest'
+      responses:
+        '200':
+          description: Habilitation mise à jour avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Habilitation'
+
+    delete:
+      summary: Supprimer une habilitation
+      operationId: deleteHabilitation
+      tags:
+        - Habilitations
+      responses:
+        '204':
+          description: Habilitation supprimée avec succès
+
+components:
+  schemas:
+    Habilitation:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Code unique de l'habilitation
+          example: "HAB_ADMIN"
+        description:
+          type: string
+          description: Description détaillée de l'habilitation
+          example: "Accès administrateur au système"
+      required:
+        - code
+
+    CreateHabilitationRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Code unique de l'habilitation
+          example: "HAB_ADMIN"
+        description:
+          type: string
+          description: Description détaillée de l'habilitation
+          example: "Accès administrateur au système"
+      required:
+        - code
+
+    UpdateHabilitationRequest:
+      type: object
+      properties:
+        description:
+          type: string
+          description: Description détaillée de l'habilitation
+          example: "Accès administrateur au système modifié"
+      required:
+        - description
