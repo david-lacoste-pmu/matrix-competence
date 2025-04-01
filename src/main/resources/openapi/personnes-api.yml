@@ -1,0 +1,191 @@
+openapi: 3.0.3
+info:
+  title: API Gestion des Personnes
+  description: API permettant la gestion des personnes et leurs associations avec des équipes
+  version: 1.0.0
+  contact:
+    name: PMU Matrix Compétence Team
+servers:
+  - url: 'http://localhost:8080'
+    description: Serveur de développement
+
+paths:
+  /personnes:
+    get:
+      summary: Récupérer toutes les personnes
+      operationId: getAllPersonnes
+      tags:
+        - Personnes
+      responses:
+        '200':
+          description: Liste des personnes récupérée avec succès
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Personne'
+
+    post:
+      summary: Créer une nouvelle personne
+      operationId: createPersonne
+      tags:
+        - Personnes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePersonneRequest'
+      responses:
+        '201':
+          description: Personne créée avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Personne'
+
+  /personnes/{identifiant}:
+    parameters:
+      - name: identifiant
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Identifiant unique de la personne
+
+    get:
+      summary: Récupérer une personne par son identifiant
+      operationId: getPersonneByIdentifiant
+      tags:
+        - Personnes
+      responses:
+        '200':
+          description: Personne récupérée avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Personne'
+
+    put:
+      summary: Mettre à jour une personne
+      operationId: updatePersonne
+      tags:
+        - Personnes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePersonneRequest'
+      responses:
+        '200':
+          description: Personne mise à jour avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Personne'
+
+    delete:
+      summary: Supprimer une personne
+      operationId: deletePersonne
+      tags:
+        - Personnes
+      responses:
+        '204':
+          description: Personne supprimée avec succès
+
+components:
+  schemas:
+    Personne:
+      type: object
+      properties:
+        identifiant:
+          type: string
+          description: Identifiant unique de la personne
+          example: "P12345"
+        nom:
+          type: string
+          description: Nom de la personne
+          example: "Dupont"
+        prenom:
+          type: string
+          description: Prénom de la personne
+          example: "Jean"
+        poste:
+          type: string
+          description: Poste occupé par la personne
+          example: "Développeur Senior"
+        equipe:
+          $ref: '#/components/schemas/Equipe'
+      required:
+        - identifiant
+        - nom
+        - prenom
+
+    CreatePersonneRequest:
+      type: object
+      properties:
+        identifiant:
+          type: string
+          description: Identifiant unique de la personne
+          example: "P12345"
+        nom:
+          type: string
+          description: Nom de la personne
+          example: "Dupont"
+        prenom:
+          type: string
+          description: Prénom de la personne
+          example: "Jean"
+        poste:
+          type: string
+          description: Poste occupé par la personne
+          example: "Développeur Senior"
+        equipeId:
+          type: string
+          description: Identifiant de l'équipe à laquelle appartient la personne
+          example: "E001"
+      required:
+        - identifiant
+        - nom
+        - prenom
+
+    UpdatePersonneRequest:
+      type: object
+      properties:
+        nom:
+          type: string
+          description: Nom de la personne
+          example: "Martin"
+        prenom:
+          type: string
+          description: Prénom de la personne
+          example: "Sophie"
+        poste:
+          type: string
+          description: Poste occupé par la personne
+          example: "Chef de Projet"
+        equipeId:
+          type: string
+          description: Identifiant de l'équipe à laquelle appartient la personne
+          example: "E002"
+
+    Equipe:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Code unique de l'équipe
+          example: "E001"
+        nom:
+          type: string
+          description: Nom de l'équipe
+          example: "Équipe Backend"
+        description:
+          type: string
+          description: Description de l'équipe
+          example: "Équipe responsable du développement backend"
+      required:
+        - code
+        - nom

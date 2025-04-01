@@ -1,0 +1,146 @@
+openapi: 3.0.3
+info:
+  title: API Gestion des Groupements
+  description: API permettant la gestion des groupements
+  version: 1.0.0
+  contact:
+    name: PMU Matrix Compétence Team
+servers:
+  - url: 'http://localhost:8080'
+    description: Serveur de développement
+
+paths:
+  /groupements:
+    get:
+      summary: Récupérer tous les groupements
+      operationId: getAllGroupements
+      tags:
+        - Groupements
+      responses:
+        '200':
+          description: Liste des groupements récupérée avec succès
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Groupement'
+
+    post:
+      summary: Créer un nouveau groupement
+      operationId: createGroupement
+      tags:
+        - Groupements
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGroupementRequest'
+      responses:
+        '201':
+          description: Groupement créé avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Groupement'
+
+  /groupements/{code}:
+    parameters:
+      - name: code
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Code unique du groupement
+
+    get:
+      summary: Récupérer un groupement par son code
+      operationId: getGroupementByCode
+      tags:
+        - Groupements
+      responses:
+        '200':
+          description: Groupement récupéré avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Groupement'
+
+    put:
+      summary: Mettre à jour un groupement
+      operationId: updateGroupement
+      tags:
+        - Groupements
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGroupementRequest'
+      responses:
+        '200':
+          description: Groupement mis à jour avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Groupement'
+
+    delete:
+      summary: Supprimer un groupement
+      operationId: deleteGroupement
+      tags:
+        - Groupements
+      responses:
+        '204':
+          description: Groupement supprimé avec succès
+
+components:
+  schemas:
+    Groupement:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Code unique du groupement
+          example: "G001"
+        libelle:
+          type: string
+          description: Libellé du groupement
+          example: "Groupement IT"
+        direction:
+          type: string
+          description: Direction à laquelle appartient le groupement
+          example: "Direction Informatique"
+      required:
+        - code
+
+    CreateGroupementRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Code unique du groupement
+          example: "G001"
+        libelle:
+          type: string
+          description: Libellé du groupement
+          example: "Groupement IT"
+        direction:
+          type: string
+          description: Direction à laquelle appartient le groupement
+          example: "Direction Informatique"
+      required:
+        - code
+
+    UpdateGroupementRequest:
+      type: object
+      properties:
+        libelle:
+          type: string
+          description: Libellé du groupement
+          example: "Groupement IT - Modifié"
+        direction:
+          type: string
+          description: Direction à laquelle appartient le groupement
+          example: "Direction SI"
