@@ -1,0 +1,280 @@
+openapi: 3.0.3
+info:
+  title: API Matrice de Compétences
+  description: API permettant la gestion des matrices de compétences
+  version: 1.0.0
+  contact:
+    name: PMU Matrix Compétence Team
+servers:
+  - url: 'http://localhost:8080'
+    description: Serveur de développement
+
+paths:
+  /matrices-competences:
+    get:
+      summary: Récupérer toutes les matrices de compétences
+      operationId: getAllMatricesCompetences
+      tags:
+        - Matrices de Compétences
+      responses:
+        '200':
+          description: Liste des matrices de compétences récupérée avec succès
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MatriceCompetence'
+        '500':
+          description: Erreur interne du serveur
+
+    post:
+      summary: Créer une nouvelle matrice de compétence
+      operationId: createMatriceCompetence
+      tags:
+        - Matrices de Compétences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMatriceCompetenceRequest'
+      responses:
+        '201':
+          description: Matrice de compétence créée avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatriceCompetence'
+        '400':
+          description: Requête invalide
+        '409':
+          description: Une matrice de compétence avec cette combinaison personne/compétence existe déjà
+        '500':
+          description: Erreur interne du serveur
+
+  /matrices-competences/personnes/{personneId}/competences/{competenceId}:
+    parameters:
+      - name: personneId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Identifiant unique de la personne
+      - name: competenceId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Identifiant unique de la compétence
+
+    get:
+      summary: Récupérer une matrice de compétence
+      operationId: getMatriceCompetence
+      tags:
+        - Matrices de Compétences
+      responses:
+        '200':
+          description: Matrice de compétence récupérée avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatriceCompetence'
+        '404':
+          description: Matrice de compétence non trouvée
+        '500':
+          description: Erreur interne du serveur
+
+    put:
+      summary: Mettre à jour une matrice de compétence
+      operationId: updateMatriceCompetence
+      tags:
+        - Matrices de Compétences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMatriceCompetenceRequest'
+      responses:
+        '200':
+          description: Matrice de compétence mise à jour avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatriceCompetence'
+        '400':
+          description: Requête invalide
+        '404':
+          description: Matrice de compétence non trouvée
+        '500':
+          description: Erreur interne du serveur
+
+    delete:
+      summary: Supprimer une matrice de compétence
+      operationId: deleteMatriceCompetence
+      tags:
+        - Matrices de Compétences
+      responses:
+        '204':
+          description: Matrice de compétence supprimée avec succès
+        '404':
+          description: Matrice de compétence non trouvée
+        '500':
+          description: Erreur interne du serveur
+
+  /matrices-competences/personnes/{personneId}:
+    parameters:
+      - name: personneId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Identifiant unique de la personne
+
+    get:
+      summary: Récupérer toutes les compétences d'une personne
+      operationId: getCompetencesByPersonne
+      tags:
+        - Matrices de Compétences
+      responses:
+        '200':
+          description: Liste des compétences de la personne récupérée avec succès
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MatriceCompetence'
+        '404':
+          description: Personne non trouvée
+        '500':
+          description: Erreur interne du serveur
+
+  /matrices-competences/competences/{competenceId}:
+    parameters:
+      - name: competenceId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Identifiant unique de la compétence
+
+    get:
+      summary: Récupérer toutes les personnes ayant une compétence donnée
+      operationId: getPersonnesByCompetence
+      tags:
+        - Matrices de Compétences
+      responses:
+        '200':
+          description: Liste des personnes ayant la compétence récupérée avec succès
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MatriceCompetence'
+        '404':
+          description: Compétence non trouvée
+        '500':
+          description: Erreur interne du serveur
+
+components:
+  schemas:
+    MatriceCompetence:
+      type: object
+      properties:
+        personne:
+          $ref: '#/components/schemas/Personne'
+        competence:
+          $ref: '#/components/schemas/Competence'
+        note:
+          $ref: '#/components/schemas/Note'
+      required:
+        - personne
+        - competence
+        - note
+
+    CreateMatriceCompetenceRequest:
+      type: object
+      properties:
+        personneId:
+          type: string
+          description: Identifiant unique de la personne
+          example: "P12345"
+        competenceId:
+          type: string
+          description: Identifiant unique de la compétence
+          example: "COMP001"
+        noteValeur:
+          type: integer
+          description: Valeur de la note attribuée
+          example: 5
+      required:
+        - personneId
+        - competenceId
+        - noteValeur
+
+    UpdateMatriceCompetenceRequest:
+      type: object
+      properties:
+        noteValeur:
+          type: integer
+          description: Valeur de la note attribuée
+          example: 4
+      required:
+        - noteValeur
+
+    Personne:
+      type: object
+      properties:
+        identifiant:
+          type: string
+          description: Identifiant unique de la personne
+          example: "P12345"
+        nom:
+          type: string
+          description: Nom de la personne
+          example: "Dupont"
+        prenom:
+          type: string
+          description: Prénom de la personne
+          example: "Jean"
+        poste:
+          type: string
+          description: Poste occupé par la personne
+          example: "Développeur Senior"
+        equipe:
+          $ref: '#/components/schemas/Equipe'
+      required:
+        - identifiant
+        - nom
+        - prenom
+
+    Competence:
+      type: object
+      properties:
+        libelle:
+          type: string
+          description: Libellé de la compétence (identifiant unique)
+          example: "Java"
+        description:
+          type: string
+          description: Description détaillée de la compétence
+          example: "Programmation en langage Java"
+      required:
+        - libelle
+
+    Note:
+      type: object
+      properties:
+        valeur:
+          type: integer
+          description: Valeur numérique de la note
+          example: 5
+        libelle:
+          type: string
+          description: Description textuelle associée à la note
+          example: "Excellent"
+      required:
+        - valeur

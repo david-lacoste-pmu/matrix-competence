@@ -1,0 +1,158 @@
+openapi: 3.0.3
+info:
+  title: API Gestion des Compétences
+  description: API permettant la gestion des compétences
+  version: 1.0.0
+  contact:
+    name: PMU Matrix Compétence Team
+servers:
+  - url: 'http://localhost:8080'
+    description: Serveur de développement
+
+paths:
+  /competences:
+    get:
+      summary: Récupérer toutes les compétences
+      operationId: getAllCompetences
+      tags:
+        - Competences
+      responses:
+        '200':
+          description: Liste des compétences récupérée avec succès
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Competence'
+        '500':
+          description: Erreur interne du serveur
+
+    post:
+      summary: Créer une nouvelle compétence
+      operationId: createCompetence
+      tags:
+        - Competences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCompetenceRequest'
+      responses:
+        '201':
+          description: Compétence créée avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Competence'
+        '400':
+          description: Requête invalide
+        '409':
+          description: Une compétence avec ce libellé existe déjà
+        '500':
+          description: Erreur interne du serveur
+
+  /competences/{libelle}:
+    parameters:
+      - name: libelle
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Libellé de la compétence (identifiant unique)
+
+    get:
+      summary: Récupérer une compétence par son libellé
+      operationId: getCompetenceByLibelle
+      tags:
+        - Competences
+      responses:
+        '200':
+          description: Compétence récupérée avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Competence'
+        '404':
+          description: Compétence non trouvée
+        '500':
+          description: Erreur interne du serveur
+
+    put:
+      summary: Mettre à jour une compétence
+      operationId: updateCompetence
+      tags:
+        - Competences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCompetenceRequest'
+      responses:
+        '200':
+          description: Compétence mise à jour avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Competence'
+        '400':
+          description: Requête invalide
+        '404':
+          description: Compétence non trouvée
+        '500':
+          description: Erreur interne du serveur
+
+    delete:
+      summary: Supprimer une compétence
+      operationId: deleteCompetence
+      tags:
+        - Competences
+      responses:
+        '204':
+          description: Compétence supprimée avec succès
+        '404':
+          description: Compétence non trouvée
+        '500':
+          description: Erreur interne du serveur
+
+components:
+  schemas:
+    Competence:
+      type: object
+      properties:
+        libelle:
+          type: string
+          description: Libellé de la compétence (identifiant unique)
+          example: "Java"
+        description:
+          type: string
+          description: Description détaillée de la compétence
+          example: "Programmation en langage Java"
+      required:
+        - libelle
+
+    CreateCompetenceRequest:
+      type: object
+      properties:
+        libelle:
+          type: string
+          description: Libellé de la compétence (identifiant unique)
+          example: "Java"
+        description:
+          type: string
+          description: Description détaillée de la compétence
+          example: "Programmation en langage Java"
+      required:
+        - libelle
+
+    UpdateCompetenceRequest:
+      type: object
+      properties:
+        description:
+          type: string
+          description: Description détaillée de la compétence
+          example: "Maîtrise du développement en langage Java et de son écosystème"
+      required:
+        - description

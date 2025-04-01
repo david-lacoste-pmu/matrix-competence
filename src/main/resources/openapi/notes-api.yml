@@ -1,0 +1,137 @@
+openapi: 3.0.3
+info:
+  title: API Gestion des Notes
+  description: API permettant la gestion des notes d'évaluation
+  version: 1.0.0
+  contact:
+    name: PMU Matrix Compétence Team
+servers:
+  - url: 'http://localhost:8080'
+    description: Serveur de développement
+
+paths:
+  /notes:
+    get:
+      summary: Récupérer toutes les notes
+      operationId: getAllNotes
+      tags:
+        - Notes
+      responses:
+        '200':
+          description: Liste des notes récupérée avec succès
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Note'
+
+    post:
+      summary: Créer une nouvelle note
+      operationId: createNote
+      tags:
+        - Notes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateNoteRequest'
+      responses:
+        '201':
+          description: Note créée avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Note'
+
+  /notes/{valeur}:
+    parameters:
+      - name: valeur
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: Valeur numérique de la note
+
+    get:
+      summary: Récupérer une note par sa valeur
+      operationId: getNoteByValeur
+      tags:
+        - Notes
+      responses:
+        '200':
+          description: Note récupérée avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Note'
+
+    put:
+      summary: Mettre à jour une note
+      operationId: updateNote
+      tags:
+        - Notes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateNoteRequest'
+      responses:
+        '200':
+          description: Note mise à jour avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Note'
+
+    delete:
+      summary: Supprimer une note
+      operationId: deleteNote
+      tags:
+        - Notes
+      responses:
+        '204':
+          description: Note supprimée avec succès
+
+components:
+  schemas:
+    Note:
+      type: object
+      properties:
+        valeur:
+          type: integer
+          description: Valeur numérique de la note
+          example: 5
+        libelle:
+          type: string
+          description: Description textuelle associée à la note
+          example: "Excellent"
+      required:
+        - valeur
+
+    CreateNoteRequest:
+      type: object
+      properties:
+        valeur:
+          type: integer
+          description: Valeur numérique de la note
+          example: 5
+        libelle:
+          type: string
+          description: Description textuelle associée à la note
+          example: "Excellent"
+      required:
+        - valeur
+        - libelle
+
+    UpdateNoteRequest:
+      type: object
+      properties:
+        libelle:
+          type: string
+          description: Description textuelle associée à la note
+          example: "Excellent - Performance exceptionnelle"
+      required:
+        - libelle
