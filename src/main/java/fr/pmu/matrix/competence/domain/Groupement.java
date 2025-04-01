@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Groupement {
-    private String libelle;
     private String code;
+    private String libelle;
     private String direction;
 }

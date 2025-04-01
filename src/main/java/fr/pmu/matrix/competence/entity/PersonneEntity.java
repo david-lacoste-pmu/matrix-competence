@@ -1,29 +1,30 @@
 package fr.pmu.matrix.competence.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
 
 @Entity
-@Table(name = "personne")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
+@Table(name = "personnes")
+@Getter
+@Setter
 public class PersonneEntity {
+    
     @Id
+    @Column(name = "identifiant", nullable = false)
     private String identifiant;
     
+    @Column(name = "nom", nullable = false)
     private String nom;
+    
+    @Column(name = "prenom", nullable = false)
     private String prenom;
+    
+    @Column(name = "poste")
     private String poste;
     
-    @ManyToOne
-    @JoinColumn(name = "equipe_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "equipe_code")
     private EquipeEntity equipe;
 }

@@ -1,41 +1,32 @@
 package fr.pmu.matrix.competence.entity;
 
+import lombok.Getter;
+import lombok.Setter;
+
+import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
-import jakarta.persistence.CascadeType;
-
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 @Entity
-@Table(name = "equipe")
-@Data
-@NoArgsConstructor
+@Table(name = "equipes")
+@Getter
+@Setter
 public class EquipeEntity {
+    
     @Id
+    @Column(name = "code", nullable = false)
     private String code;
     
+    @Column(name = "nom", nullable = false)
     private String nom;
+    
+    @Column(name = "description")
     private String description;
     
-    @ManyToOne
-    @JoinColumn(name = "groupement_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "groupement_code")
     private GroupementEntity groupement;
     
-    @OneToMany(mappedBy = "equipe", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "equipe", cascade = CascadeType.ALL)
     private List<PersonneEntity> membres = new ArrayList<>();
-    
-    public EquipeEntity(String nom, String description, String code, GroupementEntity groupement) {
-        this.nom = nom;
-        this.description = description;
-        this.code = code;
-        this.groupement = groupement;
-    }
 }

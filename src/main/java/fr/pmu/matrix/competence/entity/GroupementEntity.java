@@ -1,23 +1,26 @@
 package fr.pmu.matrix.competence.entity;
 
+import lombok.Getter;
+import lombok.Setter;
+
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 @Entity
-@Table(name = "groupement")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
+@Table(name = "groupements")
+@Getter
+@Setter
 public class GroupementEntity {
-    private String libelle;
     
     @Id
+    @Column(name = "code", nullable = false)
     private String code;
     
+    @Column(name = "libelle")
+    private String libelle;
+    
+    @Column(name = "direction")
     private String direction;
 }
