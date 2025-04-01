@@ -146,10 +146,13 @@ components:
     Habilitation:
       type: object
       properties:
-        id:
+        code:
           type: string
-          description: Identifiant unique de l'habilitation
-          example: "HAB1"
-        # Ajoutez d'autres propriétés si nécessaire pour l'habilitation
+          description: Code unique de l'habilitation
+          example: "HAB_ADMIN"
+        description:
+          type: string
+          description: Description détaillée de l'habilitation
+          example: "Accès administrateur au système"
       required:
-        - id
+        - code
