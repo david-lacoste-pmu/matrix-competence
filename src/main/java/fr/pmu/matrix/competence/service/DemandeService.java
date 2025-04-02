@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -274,6 +275,49 @@ public class DemandeService {
      */
     public List<Demande> getDemandesByCompetence(String competenceLibelle) {
         return demandeRepository.findByCompetenceRequise(competenceLibelle).stream()
+                .map(entity -> {
+                    Object destination = getDestinationEntity(entity);
+                    return demandeMapper.mapToDemandeDomain(entity, destination);
+                })
+                .collect(Collectors.toList());
+    }
+    
+    /**
+     * Recherche les demandes qui requièrent au moins une des compétences spécifiées
+     * @param competenceLibelles Liste des libellés de compétences
+     * @return Liste des demandes correspondantes
+     */
+    public List<Demande> getDemandesByCompetences(List<String> competenceLibelles) {
+        return demandeRepository.findByCompetencesRequises(competenceLibelles).stream()
+                .map(entity -> {
+                    Object destination = getDestinationEntity(entity);
+                    return demandeMapper.mapToDemandeDomain(entity, destination);
+                })
+                .collect(Collectors.toList());
+    }
+    
+    /**
+     * Recherche les demandes qui requièrent des compétences avec des notes spécifiques
+     * @param noteValeurs Liste des valeurs de notes
+     * @return Liste des demandes correspondantes
+     */
+    public List<Demande> getDemandesByNotes(List<Integer> noteValeurs) {
+        return demandeRepository.findByNotes(noteValeurs).stream()
+                .map(entity -> {
+                    Object destination = getDestinationEntity(entity);
+                    return demandeMapper.mapToDemandeDomain(entity, destination);
+                })
+                .collect(Collectors.toList());
+    }
+    
+    /**
+     * Recherche les demandes qui requièrent au moins une des compétences spécifiées avec au moins une des notes spécifiées
+     * @param competenceLibelles Liste des libellés de compétences
+     * @param noteValeurs Liste des valeurs de notes
+     * @return Liste des demandes correspondantes
+     */
+    public List<Demande> getDemandesByCompetencesAndNotes(List<String> competenceLibelles, List<Integer> noteValeurs) {
+        return demandeRepository.findByCompetencesRequisesAndNotes(competenceLibelles, noteValeurs).stream()
                 .map(entity -> {
                     Object destination = getDestinationEntity(entity);
                     return demandeMapper.mapToDemandeDomain(entity, destination);

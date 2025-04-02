@@ -20,7 +20,9 @@ paths:
       tags:
         - demandes
       summary: Liste toutes les demandes
-      description: Retourne la liste des demandes de compétences
+      description: |-
+        Retourne la liste des demandes de compétences.
+        Peut être filtrée par différents critères (actif, matricule, compétence(s), note(s))
       operationId: getAllDemandes
       parameters:
         - name: active
@@ -41,6 +43,28 @@ paths:
           required: false
           schema:
             type: string
+        - name: competences
+          in: query
+          description: Filtre sur les demandes qui requièrent au moins une des compétences spécifiées (multiple)
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+          example: ["JAVA", "SPRING"]
+        - name: notes
+          in: query
+          description: Filtre sur les demandes qui requièrent au moins une des notes spécifiées (multiple)
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: array
+            items:
+              type: integer
+          example: [3, 4, 5]
       responses:
         '200':
           description: Opération réussie
@@ -90,6 +114,60 @@ paths:
                 $ref: '#/components/schemas/Error'
         '409':
           description: Une demande avec cet ID existe déjà
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erreur serveur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /demandes/search:
+    get:
+      tags:
+        - demandes
+      summary: Recherche des demandes par compétence(s) et/ou note(s)
+      description: |-
+        Permet de rechercher des demandes en filtrant par compétences requises et/ou notes.
+        Les filtres peuvent être combinés pour affiner la recherche.
+      operationId: searchDemandes
+      parameters:
+        - name: competences
+          in: query
+          description: Filtre sur les demandes qui requièrent au moins une des compétences spécifiées
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+          example: ["JAVA", "SPRING"]
+        - name: notes
+          in: query
+          description: Filtre sur les demandes qui requièrent au moins une des notes spécifiées
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: array
+            items:
+              type: integer
+          example: [3, 4, 5]
+      responses:
+        '200':
+          description: Recherche réussie
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Demande'
+        '400':
+          description: Paramètres de recherche invalides
           content:
             application/json:
               schema:

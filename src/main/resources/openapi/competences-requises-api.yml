@@ -9,7 +9,7 @@ info:
     name: PMU Matrix API Support
     email: support@pmu-matrix.com
 servers:
-  - url: /api/v1
+  - url: 'http://localhost:8080'
 tags:
   - name: competences-requises
     description: Opérations relatives aux compétences requises dans les demandes

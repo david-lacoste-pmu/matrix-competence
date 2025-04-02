@@ -18,8 +18,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Contrôleur REST pour la gestion des demandes de compétences.
@@ -55,18 +57,39 @@ public class DemandeController {
     public ResponseEntity<List<Demande>> getAllDemandes(
             @RequestParam(required = false) Boolean active,
             @RequestParam(required = false) String matricule, 
-            @RequestParam(required = false) String competence) {
+            @RequestParam(required = false) String competence,
+            @RequestParam(required = false) List<String> competences,
+            @RequestParam(required = false) List<Integer> notes) {
         
         try {
             List<Demande> demandes;
             
-            if (active != null && active) {
+            // Filtrage par plusieurs critères
+            if (competences != null && !competences.isEmpty() && notes != null && !notes.isEmpty()) {
+                demandes = demandeService.getDemandesByCompetencesAndNotes(competences, notes);
+            }
+            // Filtrage par plusieurs compétences
+            else if (competences != null && !competences.isEmpty()) {
+                demandes = demandeService.getDemandesByCompetences(competences);
+            }
+            // Filtrage par plusieurs notes
+            else if (notes != null && !notes.isEmpty()) {
+                demandes = demandeService.getDemandesByNotes(notes);
+            }
+            // Filtrage par statut actif
+            else if (active != null && active) {
                 demandes = demandeService.getDemandesActiveAtDate(new Date());
-            } else if (matricule != null && !matricule.isEmpty()) {
+            }
+            // Filtrage par matricule du demandeur
+            else if (matricule != null && !matricule.isEmpty()) {
                 demandes = demandeService.getDemandesByDemandeur(matricule);
-            } else if (competence != null && !competence.isEmpty()) {
+            }
+            // Filtrage par une seule compétence
+            else if (competence != null && !competence.isEmpty()) {
                 demandes = demandeService.getDemandesByCompetence(competence);
-            } else {
+            }
+            // Sans filtre
+            else {
                 demandes = demandeService.getAllDemandes();
             }
             
@@ -88,6 +111,35 @@ public class DemandeController {
         } catch (RuntimeException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, 
                     "Demande non trouvée avec l'ID: " + id);
+        }
+    }
+
+    /**
+     * Recherche des demandes par compétence(s) et/ou note(s)
+     */
+    @GetMapping("/search")
+    public ResponseEntity<List<Demande>> searchDemandes(
+            @RequestParam(required = false) List<String> competences,
+            @RequestParam(required = false) List<Integer> notes) {
+        
+        try {
+            List<Demande> demandes;
+            
+            if (competences != null && !competences.isEmpty() && notes != null && !notes.isEmpty()) {
+                demandes = demandeService.getDemandesByCompetencesAndNotes(competences, notes);
+            } else if (competences != null && !competences.isEmpty()) {
+                demandes = demandeService.getDemandesByCompetences(competences);
+            } else if (notes != null && !notes.isEmpty()) {
+                demandes = demandeService.getDemandesByNotes(notes);
+            } else {
+                // Si aucun paramètre n'est fourni, on retourne toutes les demandes
+                demandes = demandeService.getAllDemandes();
+            }
+            
+            return ResponseEntity.ok(demandes);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, 
+                    "Erreur lors de la recherche des demandes: " + e.getMessage());
         }
     }
 

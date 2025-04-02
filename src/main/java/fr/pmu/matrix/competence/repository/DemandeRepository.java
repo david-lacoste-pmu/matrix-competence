@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
@@ -92,4 +93,36 @@ public interface DemandeRepository extends JpaRepository<DemandeEntity, String> 
      */
     @Query("SELECT d FROM DemandeEntity d JOIN d.competencesRequises cr WHERE cr.competence.libelle = :competenceLibelle")
     List<DemandeEntity> findByCompetenceRequise(@Param("competenceLibelle") String competenceLibelle);
+    
+    /**
+     * Recherche les demandes qui requièrent au moins une des compétences spécifiées
+     * 
+     * @param competenceLibelles Liste des libellés de compétences
+     * @return Liste des demandes qui requièrent au moins une de ces compétences
+     */
+    @Query("SELECT DISTINCT d FROM DemandeEntity d JOIN d.competencesRequises cr WHERE cr.competence.libelle IN :competenceLibelles")
+    List<DemandeEntity> findByCompetencesRequises(@Param("competenceLibelles") Collection<String> competenceLibelles);
+    
+    /**
+     * Recherche les demandes qui requièrent au moins une des compétences spécifiées avec au moins une des notes spécifiées
+     * 
+     * @param competenceLibelles Liste des libellés de compétences
+     * @param noteValeurs Liste des valeurs de notes
+     * @return Liste des demandes correspondantes
+     */
+    @Query("SELECT DISTINCT d FROM DemandeEntity d JOIN d.competencesRequises cr " +
+           "WHERE cr.competence.libelle IN :competenceLibelles AND cr.noteRequise.valeur IN :noteValeurs")
+    List<DemandeEntity> findByCompetencesRequisesAndNotes(
+            @Param("competenceLibelles") Collection<String> competenceLibelles,
+            @Param("noteValeurs") Collection<Integer> noteValeurs);
+    
+    /**
+     * Recherche les demandes qui requièrent des compétences avec au moins une des notes spécifiées
+     * 
+     * @param noteValeurs Liste des valeurs de notes
+     * @return Liste des demandes correspondantes
+     */
+    @Query("SELECT DISTINCT d FROM DemandeEntity d JOIN d.competencesRequises cr " +
+           "WHERE cr.noteRequise.valeur IN :noteValeurs")
+    List<DemandeEntity> findByNotes(@Param("noteValeurs") Collection<Integer> noteValeurs);
 }
