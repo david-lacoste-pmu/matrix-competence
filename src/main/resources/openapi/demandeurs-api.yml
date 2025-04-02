@@ -1,0 +1,191 @@
+openapi: 3.0.3
+info:
+  title: API Demandeur pour la recherche de profils
+  description: >
+    API permettant aux demandeurs de consulter et de rechercher des profils de personnes disponibles
+    (sortantes ou cherchant un nouveau challenge).
+  version: 1.0.0
+tags:
+  - name: demandeurs
+    description: Opérations relatives à la recherche de profils par les demandeurs
+paths:
+  /demandeurs/personnes-disponibles:
+    get:
+      tags:
+        - demandeurs
+      summary: Récupérer la liste des personnes disponibles
+      description: >
+        Permet aux demandeurs d'obtenir la liste des personnes sortantes ou qui cherchent un nouveau challenge
+      operationId: getPersonnesDisponibles
+      responses:
+        '200':
+          description: Liste des profils des personnes disponibles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Profil'
+        '500':
+          description: Erreur serveur interne
+  
+  /demandeurs/personnes-disponibles/{personneId}/competences:
+    get:
+      tags:
+        - demandeurs
+      summary: Récupérer la matrice de compétences d'une personne disponible
+      description: >
+        Permet aux demandeurs de consulter la matrice de compétences complète d'une personne disponible
+      operationId: getMatriceCompetencePersonne
+      parameters:
+        - name: personneId
+          in: path
+          description: Identifiant de la personne
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Matrice de compétences de la personne
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MatriceCompetence'
+        '404':
+          description: Personne non trouvée ou non disponible
+        '500':
+          description: Erreur serveur interne
+
+  /demandeurs/filtrer-par-notes:
+    get:
+      tags:
+        - demandeurs
+      summary: Filtrer les personnes par niveau de notes pour des compétences spécifiques
+      description: >
+        Permet aux demandeurs de filtrer les personnes disponibles selon un niveau de note minimal
+        pour certaines compétences
+      operationId: filtrerPersonnesParNotes
+      parameters:
+        - name: competences
+          in: query
+          description: Liste des libellés de compétences
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+        - name: noteMinimale
+          in: query
+          description: Note minimale requise pour chaque compétence
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: Liste des personnes correspondant aux critères
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Personne'
+        '500':
+          description: Erreur serveur interne
+
+  /demandeurs/filtrer-par-competences:
+    get:
+      tags:
+        - demandeurs
+      summary: Filtrer les personnes par compétences spécifiques recherchées
+      description: >
+        Permet aux demandeurs de filtrer les personnes disponibles qui possèdent toutes les compétences spécifiées
+      operationId: filtrerPersonnesParCompetences
+      parameters:
+        - name: competences
+          in: query
+          description: Liste des libellés de compétences recherchées
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        '200':
+          description: Liste des personnes ayant les compétences recherchées
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Personne'
+        '500':
+          description: Erreur serveur interne
+
+components:
+  schemas:
+    Personne:
+      type: object
+      properties:
+        identifiant:
+          type: string
+        nom:
+          type: string
+        prenom:
+          type: string
+        poste:
+          type: string
+        equipe:
+          $ref: '#/components/schemas/Equipe'
+    
+    Equipe:
+      type: object
+      properties:
+        code:
+          type: string
+        nom:
+          type: string
+        description:
+          type: string
+    
+    Competence:
+      type: object
+      properties:
+        libelle:
+          type: string
+        description:
+          type: string
+    
+    Note:
+      type: object
+      properties:
+        valeur:
+          type: integer
+        libelle:
+          type: string
+    
+    MatriceCompetence:
+      type: object
+      properties:
+        personne:
+          $ref: '#/components/schemas/Personne'
+        competence:
+          $ref: '#/components/schemas/Competence'
+        note:
+          $ref: '#/components/schemas/Note'
+
+    Profil:
+      type: object
+      properties:
+        personne:
+          $ref: '#/components/schemas/Personne'
+        rapporteur:
+          type: string
+        dateDebutDisponibilite:
+          type: string
+          format: date-time
+        dateFinDisponibilite:
+          type: string
+          format: date-time
