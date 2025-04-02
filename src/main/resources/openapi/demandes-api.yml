@@ -1,0 +1,551 @@
+openapi: 3.0.3
+info:
+  title: API de gestion des demandes de compétences
+  description: |-
+    API permettant de gérer les demandes de compétences dans le système de matrice de compétences.
+    Cette API permet de créer, consulter, mettre à jour et supprimer des demandes.
+  version: 1.0.0
+  contact:
+    name: PMU Matrix API Support
+    email: support@pmu-matrix.com
+servers:
+  - url: 'http://localhost:8080'
+tags:
+  - name: demandes
+    description: Opérations relatives aux demandes de compétences
+
+paths:
+  /demandes:
+    get:
+      tags:
+        - demandes
+      summary: Liste toutes les demandes
+      description: Retourne la liste des demandes de compétences
+      operationId: getAllDemandes
+      parameters:
+        - name: active
+          in: query
+          description: Filtre sur les demandes actives à la date actuelle
+          required: false
+          schema:
+            type: boolean
+        - name: matricule
+          in: query
+          description: Filtre sur les demandes d'un demandeur spécifique
+          required: false
+          schema:
+            type: string
+        - name: competence
+          in: query
+          description: Filtre sur les demandes qui requièrent une compétence spécifique
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Opération réussie
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Demande'
+        '400':
+          description: Requête invalide
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erreur serveur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      tags:
+        - demandes
+      summary: Crée une nouvelle demande
+      description: Ajoute une nouvelle demande de compétences au système
+      operationId: createDemande
+      requestBody:
+        description: Objet demande à créer
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DemandeCreation'
+      responses:
+        '201':
+          description: Demande créée avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Demande'
+        '400':
+          description: Données invalides pour la création
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Une demande avec cet ID existe déjà
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erreur serveur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /demandes/{id}:
+    get:
+      tags:
+        - demandes
+      summary: Récupère une demande par son ID
+      description: Retourne les détails d'une demande spécifique
+      operationId: getDemandeById
+      parameters:
+        - name: id
+          in: path
+          description: ID de la demande à récupérer
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Opération réussie
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Demande'
+        '404':
+          description: Demande non trouvée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erreur serveur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags:
+        - demandes
+      summary: Met à jour une demande existante
+      description: Met à jour les détails d'une demande spécifique
+      operationId: updateDemande
+      parameters:
+        - name: id
+          in: path
+          description: ID de la demande à mettre à jour
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Nouvelles données de la demande
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DemandeUpdate'
+      responses:
+        '200':
+          description: Demande mise à jour avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Demande'
+        '400':
+          description: Données invalides pour la mise à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Demande non trouvée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erreur serveur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+        - demandes
+      summary: Supprime une demande
+      description: Supprime une demande spécifique du système
+      operationId: deleteDemande
+      parameters:
+        - name: id
+          in: path
+          description: ID de la demande à supprimer
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Demande supprimée avec succès
+        '404':
+          description: Demande non trouvée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erreur serveur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /demandes/active/{date}:
+    get:
+      tags:
+        - demandes
+      summary: Liste les demandes actives à une date donnée
+      description: Retourne la liste des demandes actives à la date spécifiée au format ISO (YYYY-MM-DD)
+      operationId: getDemandesActiveAtDate
+      parameters:
+        - name: date
+          in: path
+          description: Date au format ISO (YYYY-MM-DD)
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Opération réussie
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Demande'
+        '400':
+          description: Format de date invalide
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erreur serveur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    Demande:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Identifiant unique de la demande
+          example: "DEM-12345"
+        matriculeDemandeur:
+          type: string
+          description: Matricule de la personne qui fait la demande
+          example: "P123"
+        description:
+          type: string
+          description: Description détaillée de la demande
+          example: "Besoin d'un développeur Java pour projet Matrix"
+        nature:
+          type: string
+          description: Nature de la demande (RENFORT, RECRUTEMENT, MONTEE_EN_COMPETENCE)
+          enum:
+            - RENFORT
+            - RECRUTEMENT
+            - MONTEE_EN_COMPETENCE
+          example: "RECRUTEMENT"
+        dateDebut:
+          type: string
+          format: date
+          description: Date de début de la demande
+          example: "2023-06-01"
+        dateFin:
+          type: string
+          format: date
+          description: Date de fin prévue de la demande
+          example: "2023-12-31"
+        destination:
+          $ref: '#/components/schemas/Destination'
+        competencesRecherchees:
+          type: array
+          description: Liste des compétences recherchées avec leur niveau requis
+          items:
+            $ref: '#/components/schemas/CompetenceRequise'
+      required:
+        - matriculeDemandeur
+        - nature
+        - dateDebut
+        - dateFin
+        - destination
+        - competencesRecherchees
+    
+    DemandeCreation:
+      type: object
+      properties:
+        matriculeDemandeur:
+          type: string
+          description: Matricule de la personne qui fait la demande
+          example: "P123"
+        description:
+          type: string
+          description: Description détaillée de la demande
+          example: "Besoin d'un développeur Java pour projet Matrix"
+        nature:
+          type: string
+          description: Nature de la demande (RENFORT, RECRUTEMENT, MONTEE_EN_COMPETENCE)
+          enum:
+            - RENFORT
+            - RECRUTEMENT
+            - MONTEE_EN_COMPETENCE
+          example: "RECRUTEMENT"
+        dateDebut:
+          type: string
+          format: date
+          description: Date de début de la demande
+          example: "2023-06-01"
+        dateFin:
+          type: string
+          format: date
+          description: Date de fin prévue de la demande
+          example: "2023-12-31"
+        destination:
+          $ref: '#/components/schemas/DestinationCreation'
+        competencesRecherchees:
+          type: array
+          description: Liste des compétences recherchées avec leur niveau requis
+          items:
+            $ref: '#/components/schemas/CompetenceRequiseCreation'
+      required:
+        - matriculeDemandeur
+        - nature
+        - dateDebut
+        - dateFin
+        - destination
+        - competencesRecherchees
+    
+    DemandeUpdate:
+      type: object
+      properties:
+        matriculeDemandeur:
+          type: string
+          description: Matricule de la personne qui fait la demande
+          example: "P123"
+        description:
+          type: string
+          description: Description détaillée de la demande
+          example: "Besoin d'un développeur Java pour projet Matrix"
+        nature:
+          type: string
+          description: Nature de la demande (RENFORT, RECRUTEMENT, MONTEE_EN_COMPETENCE)
+          enum:
+            - RENFORT
+            - RECRUTEMENT
+            - MONTEE_EN_COMPETENCE
+          example: "RECRUTEMENT"
+        dateDebut:
+          type: string
+          format: date
+          description: Date de début de la demande
+          example: "2023-06-01"
+        dateFin:
+          type: string
+          format: date
+          description: Date de fin prévue de la demande
+          example: "2023-12-31"
+        destination:
+          $ref: '#/components/schemas/DestinationCreation'
+        competencesRecherchees:
+          type: array
+          description: Liste des compétences recherchées avec leur niveau requis
+          items:
+            $ref: '#/components/schemas/CompetenceRequiseCreation'
+      required:
+        - matriculeDemandeur
+        - nature
+        - dateDebut
+        - dateFin
+        - destination
+        - competencesRecherchees
+    
+    Destination:
+      type: object
+      discriminator:
+        propertyName: type
+        mapping:
+          EQUIPE: '#/components/schemas/DestinationEquipe'
+          GROUPEMENT: '#/components/schemas/DestinationGroupement'
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          description: Type de destination (EQUIPE ou GROUPEMENT)
+          enum:
+            - EQUIPE
+            - GROUPEMENT
+    
+    DestinationEquipe:
+      allOf:
+        - $ref: '#/components/schemas/Destination'
+        - type: object
+          properties:
+            equipe:
+              $ref: '#/components/schemas/Equipe'
+          required:
+            - equipe
+    
+    DestinationGroupement:
+      allOf:
+        - $ref: '#/components/schemas/Destination'
+        - type: object
+          properties:
+            groupement:
+              $ref: '#/components/schemas/Groupement'
+          required:
+            - groupement
+    
+    DestinationCreation:
+      type: object
+      properties:
+        type:
+          type: string
+          description: Type de destination (EQUIPE ou GROUPEMENT)
+          enum:
+            - EQUIPE
+            - GROUPEMENT
+        code:
+          type: string
+          description: Code de l'équipe ou du groupement
+          example: "EQ001"
+      required:
+        - type
+        - code
+    
+    Equipe:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Code unique de l'équipe
+          example: "EQ001"
+        nom:
+          type: string
+          description: Nom de l'équipe
+          example: "Équipe Backend"
+        description:
+          type: string
+          description: Description de l'équipe
+          example: "Équipe responsable du développement backend"
+      required:
+        - code
+        - nom
+    
+    Groupement:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Code unique du groupement
+          example: "G001"
+        libelle:
+          type: string
+          description: Libellé du groupement
+          example: "Groupement IT"
+        direction:
+          type: string
+          description: Direction à laquelle appartient le groupement
+          example: "Direction Informatique"
+      required:
+        - code
+        - libelle
+    
+    CompetenceRequise:
+      type: object
+      properties:
+        competence:
+          $ref: '#/components/schemas/Competence'
+        noteRequise:
+          $ref: '#/components/schemas/Note'
+      required:
+        - competence
+        - noteRequise
+    
+    CompetenceRequiseCreation:
+      type: object
+      properties:
+        competenceLibelle:
+          type: string
+          description: Libellé de la compétence requise
+          example: "JAVA"
+        noteValeur:
+          type: integer
+          description: Valeur de la note requise
+          example: 4
+      required:
+        - competenceLibelle
+        - noteValeur
+    
+    Competence:
+      type: object
+      properties:
+        libelle:
+          type: string
+          description: Libellé unique de la compétence
+          example: "JAVA"
+        description:
+          type: string
+          description: Description de la compétence
+          example: "Programmation Java"
+      required:
+        - libelle
+    
+    Note:
+      type: object
+      properties:
+        valeur:
+          type: integer
+          description: Valeur numérique de la note
+          example: 4
+        libelle:
+          type: string
+          description: Libellé de la note
+          example: "Avancé"
+      required:
+        - valeur
+        - libelle
+    
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: Code d'erreur
+          example: 400
+        message:
+          type: string
+          description: Message d'erreur
+          example: "Paramètres invalides"
+        details:
+          type: string
+          description: Détails supplémentaires sur l'erreur
+          example: "La date de fin ne peut pas être antérieure à la date de début"
+      required:
+        - code
+        - message

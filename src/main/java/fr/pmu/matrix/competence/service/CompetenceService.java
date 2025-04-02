@@ -2,6 +2,7 @@ package fr.pmu.matrix.competence.service;
 
 import fr.pmu.matrix.competence.domain.Competence;
 import fr.pmu.matrix.competence.entity.CompetenceEntity;
+import fr.pmu.matrix.competence.mapper.CompetenceMapper;
 import fr.pmu.matrix.competence.repository.CompetenceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,10 +15,13 @@ import java.util.stream.Collectors;
 public class CompetenceService {
 
     private final CompetenceRepository competenceRepository;
+    private final CompetenceMapper competenceMapper;
 
     @Autowired
-    public CompetenceService(CompetenceRepository competenceRepository) {
+    public CompetenceService(CompetenceRepository competenceRepository, 
+                            CompetenceMapper competenceMapper) {
         this.competenceRepository = competenceRepository;
+        this.competenceMapper = competenceMapper;
     }
 
     /**
@@ -26,7 +30,7 @@ public class CompetenceService {
      */
     public List<Competence> getAllCompetences() {
         return competenceRepository.findAll().stream()
-                .map(this::mapToCompetenceDomain)
+                .map(competenceMapper::mapToCompetenceDomain)
                 .collect(Collectors.toList());
     }
 
@@ -40,7 +44,7 @@ public class CompetenceService {
         CompetenceEntity competenceEntity = competenceRepository.findById(libelle)
                 .orElseThrow(() -> new RuntimeException("Compétence non trouvée avec le libellé: " + libelle));
                 
-        return mapToCompetenceDomain(competenceEntity);
+        return competenceMapper.mapToCompetenceDomain(competenceEntity);
     }
 
     /**
@@ -56,12 +60,9 @@ public class CompetenceService {
             throw new RuntimeException("Une compétence avec ce libellé existe déjà: " + competence.getLibelle());
         }
         
-        CompetenceEntity competenceEntity = new CompetenceEntity();
-        competenceEntity.setLibelle(competence.getLibelle());
-        competenceEntity.setDescription(competence.getDescription());
-        
+        CompetenceEntity competenceEntity = competenceMapper.mapToCompetenceEntity(competence);
         competenceEntity = competenceRepository.save(competenceEntity);
-        return mapToCompetenceDomain(competenceEntity);
+        return competenceMapper.mapToCompetenceDomain(competenceEntity);
     }
 
     /**
@@ -80,7 +81,7 @@ public class CompetenceService {
         competenceEntity.setDescription(competence.getDescription());
         
         competenceEntity = competenceRepository.save(competenceEntity);
-        return mapToCompetenceDomain(competenceEntity);
+        return competenceMapper.mapToCompetenceDomain(competenceEntity);
     }
 
     /**
@@ -94,17 +95,5 @@ public class CompetenceService {
             throw new RuntimeException("Compétence non trouvée avec le libellé: " + libelle);
         }
         competenceRepository.deleteById(libelle);
-    }
-
-    /**
-     * Convertit une entité compétence en objet domain
-     * @param entity L'entité à convertir
-     * @return L'objet domain correspondant
-     */
-    private Competence mapToCompetenceDomain(CompetenceEntity entity) {
-        Competence competence = new Competence();
-        competence.setLibelle(entity.getLibelle());
-        competence.setDescription(entity.getDescription());
-        return competence;
     }
 }

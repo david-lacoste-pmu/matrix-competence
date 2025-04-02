@@ -2,11 +2,13 @@ package fr.pmu.matrix.competence.service;
 
 import fr.pmu.matrix.competence.domain.Note;
 import fr.pmu.matrix.competence.entity.NoteEntity;
+import fr.pmu.matrix.competence.mapper.NoteMapper;
 import fr.pmu.matrix.competence.repository.NoteRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Arrays;
@@ -23,6 +25,9 @@ class NoteServiceTest {
 
     @Mock
     private NoteRepository noteRepository;
+    
+    @Spy
+    private NoteMapper noteMapper = new NoteMapper();
 
     @InjectMocks
     private NoteService noteService;
@@ -51,6 +56,7 @@ class NoteServiceTest {
         assertEquals(5, result.get(1).getValeur());
         assertEquals("Excellent", result.get(1).getLibelle());
         verify(noteRepository, times(1)).findAll();
+        verify(noteMapper, times(2)).mapToNoteDomain(any(NoteEntity.class));
     }
 
     @Test
@@ -70,6 +76,7 @@ class NoteServiceTest {
         assertEquals(5, result.getValeur());
         assertEquals("Excellent", result.getLibelle());
         verify(noteRepository, times(1)).findById(5);
+        verify(noteMapper, times(1)).mapToNoteDomain(entity);
     }
 
     @Test
@@ -80,6 +87,7 @@ class NoteServiceTest {
         // When / Then
         assertThrows(RuntimeException.class, () -> noteService.getNoteByValeur(999));
         verify(noteRepository, times(1)).findById(999);
+        verify(noteMapper, never()).mapToNoteDomain(any(NoteEntity.class));
     }
 
     @Test
@@ -89,12 +97,17 @@ class NoteServiceTest {
         note.setValeur(5);
         note.setLibelle("Excellent");
 
+        NoteEntity noteEntity = new NoteEntity();
+        noteEntity.setValeur(5);
+        noteEntity.setLibelle("Excellent");
+
         NoteEntity savedEntity = new NoteEntity();
         savedEntity.setValeur(5);
         savedEntity.setLibelle("Excellent");
 
         when(noteRepository.existsById(5)).thenReturn(false);
-        when(noteRepository.save(any(NoteEntity.class))).thenReturn(savedEntity);
+        when(noteMapper.mapToNoteEntity(note)).thenReturn(noteEntity);
+        when(noteRepository.save(noteEntity)).thenReturn(savedEntity);
 
         // When
         Note result = noteService.createNote(note);
@@ -104,7 +117,9 @@ class NoteServiceTest {
         assertEquals(5, result.getValeur());
         assertEquals("Excellent", result.getLibelle());
         verify(noteRepository, times(1)).existsById(5);
-        verify(noteRepository, times(1)).save(any(NoteEntity.class));
+        verify(noteMapper, times(1)).mapToNoteEntity(note);
+        verify(noteRepository, times(1)).save(noteEntity);
+        verify(noteMapper, times(1)).mapToNoteDomain(savedEntity);
     }
 
     @Test
@@ -120,6 +135,8 @@ class NoteServiceTest {
         assertThrows(RuntimeException.class, () -> noteService.createNote(note));
         verify(noteRepository, times(1)).existsById(5);
         verify(noteRepository, never()).save(any(NoteEntity.class));
+        verify(noteMapper, never()).mapToNoteEntity(any(Note.class));
+        verify(noteMapper, never()).mapToNoteDomain(any(NoteEntity.class));
     }
 
     @Test
@@ -137,7 +154,7 @@ class NoteServiceTest {
         updateData.setLibelle("Excellent - Performance exceptionnelle");
 
         when(noteRepository.findById(5)).thenReturn(Optional.of(existingEntity));
-        when(noteRepository.save(any(NoteEntity.class))).thenReturn(updatedEntity);
+        when(noteRepository.save(existingEntity)).thenReturn(updatedEntity);
 
         // When
         Note result = noteService.updateNote(5, updateData);
@@ -147,7 +164,8 @@ class NoteServiceTest {
         assertEquals(5, result.getValeur());
         assertEquals("Excellent - Performance exceptionnelle", result.getLibelle());
         verify(noteRepository, times(1)).findById(5);
-        verify(noteRepository, times(1)).save(any(NoteEntity.class));
+        verify(noteRepository, times(1)).save(existingEntity);
+        verify(noteMapper, times(1)).mapToNoteDomain(updatedEntity);
     }
 
     @Test
@@ -165,7 +183,7 @@ class NoteServiceTest {
         // Libellé non fourni (null)
 
         when(noteRepository.findById(5)).thenReturn(Optional.of(existingEntity));
-        when(noteRepository.save(any(NoteEntity.class))).thenReturn(updatedEntity);
+        when(noteRepository.save(existingEntity)).thenReturn(updatedEntity);
 
         // When
         Note result = noteService.updateNote(5, updateData);
@@ -175,7 +193,8 @@ class NoteServiceTest {
         assertEquals(5, result.getValeur());
         assertEquals("Excellent", result.getLibelle());
         verify(noteRepository, times(1)).findById(5);
-        verify(noteRepository, times(1)).save(any(NoteEntity.class));
+        verify(noteRepository, times(1)).save(existingEntity);
+        verify(noteMapper, times(1)).mapToNoteDomain(updatedEntity);
     }
 
     @Test
@@ -190,6 +209,7 @@ class NoteServiceTest {
         assertThrows(RuntimeException.class, () -> noteService.updateNote(999, updateData));
         verify(noteRepository, times(1)).findById(999);
         verify(noteRepository, never()).save(any(NoteEntity.class));
+        verify(noteMapper, never()).mapToNoteDomain(any(NoteEntity.class));
     }
 
     @Test
@@ -214,24 +234,5 @@ class NoteServiceTest {
         assertThrows(RuntimeException.class, () -> noteService.deleteNote(999));
         verify(noteRepository, times(1)).existsById(999);
         verify(noteRepository, never()).deleteById(anyInt());
-    }
-
-    @Test
-    void testConvertToNote() {
-        // Given
-        NoteEntity entity = new NoteEntity();
-        entity.setValeur(5);
-        entity.setLibelle("Excellent");
-
-        when(noteRepository.findById(5)).thenReturn(Optional.of(entity));
-
-        // When
-        Note result = noteService.getNoteByValeur(5);
-
-        // Then
-        assertNotNull(result);
-        assertEquals(5, result.getValeur());
-        assertEquals("Excellent", result.getLibelle());
-        verify(noteRepository, times(1)).findById(5);
     }
 }

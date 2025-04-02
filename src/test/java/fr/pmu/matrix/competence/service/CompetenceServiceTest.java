@@ -2,11 +2,13 @@ package fr.pmu.matrix.competence.service;
 
 import fr.pmu.matrix.competence.domain.Competence;
 import fr.pmu.matrix.competence.entity.CompetenceEntity;
+import fr.pmu.matrix.competence.mapper.CompetenceMapper;
 import fr.pmu.matrix.competence.repository.CompetenceRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Arrays;
@@ -23,6 +25,9 @@ class CompetenceServiceTest {
 
     @Mock
     private CompetenceRepository competenceRepository;
+    
+    @Spy
+    private CompetenceMapper competenceMapper = new CompetenceMapper();
 
     @InjectMocks
     private CompetenceService competenceService;
@@ -44,6 +49,7 @@ class CompetenceServiceTest {
         assertEquals("JAVA", result.get(0).getLibelle());
         assertEquals("SPRING", result.get(1).getLibelle());
         verify(competenceRepository, times(1)).findAll();
+        verify(competenceMapper, times(2)).mapToCompetenceDomain(any(CompetenceEntity.class));
     }
 
     @Test
@@ -62,6 +68,7 @@ class CompetenceServiceTest {
         assertEquals("JAVA", result.getLibelle());
         assertEquals("Java Programming", result.getDescription());
         verify(competenceRepository, times(1)).findById(libelle);
+        verify(competenceMapper, times(1)).mapToCompetenceDomain(entity);
     }
 
     @Test
@@ -78,6 +85,7 @@ class CompetenceServiceTest {
         
         assertEquals("Compétence non trouvée avec le libellé: " + libelle, exception.getMessage());
         verify(competenceRepository, times(1)).findById(libelle);
+        verify(competenceMapper, never()).mapToCompetenceDomain(any(CompetenceEntity.class));
     }
 
     @Test
@@ -87,10 +95,12 @@ class CompetenceServiceTest {
         competence.setLibelle("JAVA");
         competence.setDescription("Java Programming");
 
+        CompetenceEntity entityToSave = createCompetenceEntity("JAVA", "Java Programming");
         CompetenceEntity savedEntity = createCompetenceEntity("JAVA", "Java Programming");
 
         when(competenceRepository.existsById("JAVA")).thenReturn(false);
-        when(competenceRepository.save(any(CompetenceEntity.class))).thenReturn(savedEntity);
+        when(competenceMapper.mapToCompetenceEntity(competence)).thenReturn(entityToSave);
+        when(competenceRepository.save(entityToSave)).thenReturn(savedEntity);
 
         // When
         Competence result = competenceService.createCompetence(competence);
@@ -100,7 +110,9 @@ class CompetenceServiceTest {
         assertEquals("JAVA", result.getLibelle());
         assertEquals("Java Programming", result.getDescription());
         verify(competenceRepository, times(1)).existsById("JAVA");
-        verify(competenceRepository, times(1)).save(any(CompetenceEntity.class));
+        verify(competenceMapper, times(1)).mapToCompetenceEntity(competence);
+        verify(competenceRepository, times(1)).save(entityToSave);
+        verify(competenceMapper, times(1)).mapToCompetenceDomain(savedEntity);
     }
 
     @Test
@@ -120,6 +132,8 @@ class CompetenceServiceTest {
         assertEquals("Une compétence avec ce libellé existe déjà: JAVA", exception.getMessage());
         verify(competenceRepository, times(1)).existsById("JAVA");
         verify(competenceRepository, never()).save(any(CompetenceEntity.class));
+        verify(competenceMapper, never()).mapToCompetenceDomain(any(CompetenceEntity.class));
+        verify(competenceMapper, never()).mapToCompetenceEntity(any(Competence.class));
     }
 
     @Test
@@ -133,7 +147,7 @@ class CompetenceServiceTest {
         CompetenceEntity updatedEntity = createCompetenceEntity(libelle, "Updated Java Programming");
 
         when(competenceRepository.findById(libelle)).thenReturn(Optional.of(existingEntity));
-        when(competenceRepository.save(any(CompetenceEntity.class))).thenReturn(updatedEntity);
+        when(competenceRepository.save(existingEntity)).thenReturn(updatedEntity);
 
         // When
         Competence result = competenceService.updateCompetence(libelle, competence);
@@ -143,7 +157,8 @@ class CompetenceServiceTest {
         assertEquals(libelle, result.getLibelle());
         assertEquals("Updated Java Programming", result.getDescription());
         verify(competenceRepository, times(1)).findById(libelle);
-        verify(competenceRepository, times(1)).save(any(CompetenceEntity.class));
+        verify(competenceRepository, times(1)).save(existingEntity);
+        verify(competenceMapper, times(1)).mapToCompetenceDomain(updatedEntity);
     }
 
     @Test
@@ -163,6 +178,7 @@ class CompetenceServiceTest {
         assertEquals("Compétence non trouvée avec le libellé: " + libelle, exception.getMessage());
         verify(competenceRepository, times(1)).findById(libelle);
         verify(competenceRepository, never()).save(any(CompetenceEntity.class));
+        verify(competenceMapper, never()).mapToCompetenceDomain(any(CompetenceEntity.class));
     }
 
     @Test

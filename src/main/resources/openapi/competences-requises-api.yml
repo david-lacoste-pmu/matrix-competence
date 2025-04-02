@@ -1,0 +1,367 @@
+openapi: 3.0.3
+info:
+  title: API de gestion des compétences requises
+  description: |-
+    API permettant de gérer les compétences requises associées aux demandes.
+    Cette API permet de créer, consulter, mettre à jour et supprimer les compétences requises.
+  version: 1.0.0
+  contact:
+    name: PMU Matrix API Support
+    email: support@pmu-matrix.com
+servers:
+  - url: /api/v1
+tags:
+  - name: competences-requises
+    description: Opérations relatives aux compétences requises dans les demandes
+
+paths:
+  /demandes/{demandeId}/competences-requises:
+    get:
+      tags:
+        - competences-requises
+      summary: Liste toutes les compétences requises d'une demande
+      description: Retourne la liste des compétences requises associées à une demande spécifique
+      operationId: getCompetencesRequisesByDemandeId
+      parameters:
+        - name: demandeId
+          in: path
+          description: ID de la demande
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Opération réussie
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CompetenceRequise'
+        '404':
+          description: Demande non trouvée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erreur serveur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      tags:
+        - competences-requises
+      summary: Ajoute une compétence requise à une demande
+      description: Ajoute une nouvelle compétence requise à une demande existante
+      operationId: addCompetenceRequise
+      parameters:
+        - name: demandeId
+          in: path
+          description: ID de la demande
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Objet compétence requise à créer
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompetenceRequiseCreation'
+      responses:
+        '201':
+          description: Compétence requise ajoutée avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompetenceRequise'
+        '400':
+          description: Données invalides
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Demande ou compétence ou note non trouvée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erreur serveur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /demandes/{demandeId}/competences-requises/{competenceId}/{noteValeur}:
+    get:
+      tags:
+        - competences-requises
+      summary: Récupère une compétence requise spécifique
+      description: Retourne les détails d'une compétence requise spécifique d'une demande
+      operationId: getCompetenceRequise
+      parameters:
+        - name: demandeId
+          in: path
+          description: ID de la demande
+          required: true
+          schema:
+            type: string
+        - name: competenceId
+          in: path
+          description: ID (libellé) de la compétence
+          required: true
+          schema:
+            type: string
+        - name: noteValeur
+          in: path
+          description: Valeur de la note requise
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Opération réussie
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompetenceRequise'
+        '404':
+          description: Demande ou compétence requise non trouvée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erreur serveur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags:
+        - competences-requises
+      summary: Met à jour une compétence requise
+      description: Met à jour la note requise pour une compétence donnée dans une demande
+      operationId: updateCompetenceRequise
+      parameters:
+        - name: demandeId
+          in: path
+          description: ID de la demande
+          required: true
+          schema:
+            type: string
+        - name: competenceId
+          in: path
+          description: ID (libellé) de la compétence
+          required: true
+          schema:
+            type: string
+        - name: noteValeur
+          in: path
+          description: Valeur actuelle de la note requise
+          required: true
+          schema:
+            type: integer
+            format: int32
+      requestBody:
+        description: Nouvelle note requise
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompetenceRequiseUpdate'
+      responses:
+        '200':
+          description: Compétence requise mise à jour avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompetenceRequise'
+        '400':
+          description: Données invalides
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Demande, compétence ou note non trouvée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erreur serveur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+        - competences-requises
+      summary: Supprime une compétence requise
+      description: Supprime une compétence requise d'une demande
+      operationId: deleteCompetenceRequise
+      parameters:
+        - name: demandeId
+          in: path
+          description: ID de la demande
+          required: true
+          schema:
+            type: string
+        - name: competenceId
+          in: path
+          description: ID (libellé) de la compétence
+          required: true
+          schema:
+            type: string
+        - name: noteValeur
+          in: path
+          description: Valeur de la note requise
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '204':
+          description: Compétence requise supprimée avec succès
+        '404':
+          description: Demande ou compétence requise non trouvée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erreur serveur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /demandes/{demandeId}/competences-requises/by-competence/{competenceId}:
+    get:
+      tags:
+        - competences-requises
+      summary: Récupère une compétence requise par compétence
+      description: Retourne les détails d'une compétence requise dans une demande en utilisant uniquement l'ID de la compétence
+      operationId: getCompetenceRequiseByCompetence
+      parameters:
+        - name: demandeId
+          in: path
+          description: ID de la demande
+          required: true
+          schema:
+            type: string
+        - name: competenceId
+          in: path
+          description: ID (libellé) de la compétence
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Opération réussie
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompetenceRequise'
+        '404':
+          description: Demande ou compétence requise non trouvée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erreur serveur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    CompetenceRequise:
+      type: object
+      properties:
+        competence:
+          $ref: '#/components/schemas/Competence'
+        noteRequise:
+          $ref: '#/components/schemas/Note'
+      required:
+        - competence
+        - noteRequise
+
+    CompetenceRequiseCreation:
+      type: object
+      properties:
+        competenceLibelle:
+          type: string
+          description: Libellé de la compétence
+          example: "JAVA"
+        noteValeur:
+          type: integer
+          description: Valeur numérique de la note requise
+          example: 4
+      required:
+        - competenceLibelle
+        - noteValeur
+
+    CompetenceRequiseUpdate:
+      type: object
+      properties:
+        nouvelleNoteValeur:
+          type: integer
+          description: Nouvelle valeur numérique de la note requise
+          example: 5
+      required:
+        - nouvelleNoteValeur
+
+    Competence:
+      type: object
+      properties:
+        libelle:
+          type: string
+          description: Libellé unique de la compétence
+          example: "JAVA"
+        description:
+          type: string
+          description: Description de la compétence
+          example: "Programmation Java"
+      required:
+        - libelle
+  
+    Note:
+      type: object
+      properties:
+        valeur:
+          type: integer
+          description: Valeur numérique de la note
+          example: 4
+        libelle:
+          type: string
+          description: Libellé de la note
+          example: "Avancé"
+      required:
+        - valeur
+        - libelle
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: Code d'erreur HTTP
+          example: 404
+        message:
+          type: string
+          description: Message d'erreur
+          example: "Ressource non trouvée"
+        details:
+          type: string
+          description: Détails supplémentaires sur l'erreur
+          example: "La compétence requise spécifiée n'existe pas dans cette demande"

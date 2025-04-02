@@ -1,9 +1,9 @@
 package fr.pmu.matrix.competence.service;
 
-import fr.pmu.matrix.competence.domain.Equipe;
 import fr.pmu.matrix.competence.domain.Personne;
 import fr.pmu.matrix.competence.entity.EquipeEntity;
 import fr.pmu.matrix.competence.entity.PersonneEntity;
+import fr.pmu.matrix.competence.mapper.PersonneMapper;
 import fr.pmu.matrix.competence.repository.EquipeRepository;
 import fr.pmu.matrix.competence.repository.PersonneRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,11 +18,15 @@ public class PersonneService {
 
     private final PersonneRepository personneRepository;
     private final EquipeRepository equipeRepository;
+    private final PersonneMapper personneMapper;
 
     @Autowired
-    public PersonneService(PersonneRepository personneRepository, EquipeRepository equipeRepository) {
+    public PersonneService(PersonneRepository personneRepository, 
+                          EquipeRepository equipeRepository,
+                          PersonneMapper personneMapper) {
         this.personneRepository = personneRepository;
         this.equipeRepository = equipeRepository;
+        this.personneMapper = personneMapper;
     }
 
     /**
@@ -32,7 +36,7 @@ public class PersonneService {
     public List<Personne> getAllPersonnes() {
         return personneRepository.findAll()
                 .stream()
-                .map(this::mapToPersonneDomain)
+                .map(personneMapper::mapToPersonneDomain)
                 .collect(Collectors.toList());
     }
 
@@ -43,7 +47,7 @@ public class PersonneService {
      */
     public Personne getPersonneByIdentifiant(String identifiant) {
         return personneRepository.findById(identifiant)
-                .map(this::mapToPersonneDomain)
+                .map(personneMapper::mapToPersonneDomain)
                 .orElseThrow(() -> new RuntimeException("Personne non trouvée avec l'identifiant: " + identifiant));
     }
 
@@ -60,11 +64,7 @@ public class PersonneService {
             throw new RuntimeException("Une personne avec cet identifiant existe déjà: " + personne.getIdentifiant());
         }
         
-        PersonneEntity personneEntity = new PersonneEntity();
-        personneEntity.setIdentifiant(personne.getIdentifiant());
-        personneEntity.setNom(personne.getNom());
-        personneEntity.setPrenom(personne.getPrenom());
-        personneEntity.setPoste(personne.getPoste());
+        PersonneEntity personneEntity = personneMapper.mapToPersonneEntity(personne);
         
         // Attribuer l'équipe si un identifiant d'équipe est fourni
         if (equipeId != null && !equipeId.isEmpty()) {
@@ -74,7 +74,7 @@ public class PersonneService {
         }
         
         personneEntity = personneRepository.save(personneEntity);
-        return mapToPersonneDomain(personneEntity);
+        return personneMapper.mapToPersonneDomain(personneEntity);
     }
 
     /**
@@ -112,7 +112,7 @@ public class PersonneService {
         }
         
         personneEntity = personneRepository.save(personneEntity);
-        return mapToPersonneDomain(personneEntity);
+        return personneMapper.mapToPersonneDomain(personneEntity);
     }
 
     /**
@@ -125,29 +125,5 @@ public class PersonneService {
             throw new RuntimeException("Personne non trouvée avec l'identifiant: " + identifiant);
         }
         personneRepository.deleteById(identifiant);
-    }
-
-    /**
-     * Convertit une entité personne en objet domain
-     * @param entity L'entité à convertir
-     * @return L'objet domain correspondant
-     */
-    private Personne mapToPersonneDomain(PersonneEntity entity) {
-        Personne personne = new Personne();
-        personne.setIdentifiant(entity.getIdentifiant());
-        personne.setNom(entity.getNom());
-        personne.setPrenom(entity.getPrenom());
-        personne.setPoste(entity.getPoste());
-        
-        // Convertir l'équipe si elle existe
-        if (entity.getEquipe() != null) {
-            Equipe equipe = new Equipe();
-            equipe.setCode(entity.getEquipe().getCode());
-            equipe.setNom(entity.getEquipe().getNom());
-            equipe.setDescription(entity.getEquipe().getDescription());
-            personne.setEquipe(equipe);
-        }
-        
-        return personne;
     }
 }

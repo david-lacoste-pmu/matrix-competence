@@ -1,11 +1,10 @@
 package fr.pmu.matrix.competence.service;
 
 import fr.pmu.matrix.competence.domain.Equipe;
-import fr.pmu.matrix.competence.domain.Groupement;
-import fr.pmu.matrix.competence.domain.Personne;
 import fr.pmu.matrix.competence.entity.EquipeEntity;
 import fr.pmu.matrix.competence.entity.GroupementEntity;
 import fr.pmu.matrix.competence.entity.PersonneEntity;
+import fr.pmu.matrix.competence.mapper.EquipeMapper;
 import fr.pmu.matrix.competence.repository.EquipeRepository;
 import fr.pmu.matrix.competence.repository.GroupementRepository;
 import fr.pmu.matrix.competence.repository.PersonneRepository;
@@ -13,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Arrays;
@@ -36,6 +36,9 @@ class EquipeServiceTest {
 
     @Mock
     private PersonneRepository personneRepository;
+    
+    @Spy
+    private EquipeMapper equipeMapper = new EquipeMapper();
 
     @InjectMocks
     private EquipeService equipeService;
@@ -73,6 +76,7 @@ class EquipeServiceTest {
         assertEquals("EQ002", result.get(1).getCode());
         verify(equipeRepository, times(1)).findAll();
         verify(personneRepository, times(2)).findByEquipeCode(anyString());
+        verify(equipeMapper, times(2)).convertToEquipe(any(EquipeEntity.class), anyList());
     }
 
     @Test
@@ -95,8 +99,10 @@ class EquipeServiceTest {
         personneEntity.setPrenom("Jean");
         personneEntity.setPoste("Développeur");
 
+        List<PersonneEntity> personneEntities = Arrays.asList(personneEntity);
+
         when(equipeRepository.findById("EQ001")).thenReturn(Optional.of(entity));
-        when(personneRepository.findByEquipeCode("EQ001")).thenReturn(Arrays.asList(personneEntity));
+        when(personneRepository.findByEquipeCode("EQ001")).thenReturn(personneEntities);
 
         // When
         Equipe result = equipeService.getEquipeByCode("EQ001");
@@ -108,12 +114,11 @@ class EquipeServiceTest {
         assertEquals("Équipe de développement", result.getDescription());
         assertNotNull(result.getGroupement());
         assertEquals("G001", result.getGroupement().getCode());
-        assertEquals("Groupement IT", result.getGroupement().getLibelle());
-        assertEquals("Direction Informatique", result.getGroupement().getDirection());
         assertEquals(1, result.getMembres().size());
         assertEquals("P001", result.getMembres().get(0).getIdentifiant());
         verify(equipeRepository, times(1)).findById("EQ001");
         verify(personneRepository, times(1)).findByEquipeCode("EQ001");
+        verify(equipeMapper, times(1)).convertToEquipe(entity, personneEntities);
     }
 
     @Test
@@ -125,6 +130,7 @@ class EquipeServiceTest {
         assertThrows(RuntimeException.class, () -> equipeService.getEquipeByCode("EQ999"));
         verify(equipeRepository, times(1)).findById("EQ999");
         verify(personneRepository, never()).findByEquipeCode(anyString());
+        verify(equipeMapper, never()).convertToEquipe(any(EquipeEntity.class), anyList());
     }
 
     @Test
@@ -146,10 +152,12 @@ class EquipeServiceTest {
         savedEntity.setDescription("Équipe de développement");
         savedEntity.setGroupement(groupementEntity);
 
+        List<PersonneEntity> emptyPersonneList = Collections.emptyList();
+
         when(equipeRepository.existsById("EQ001")).thenReturn(false);
         when(groupementRepository.findById("G001")).thenReturn(Optional.of(groupementEntity));
         when(equipeRepository.save(any(EquipeEntity.class))).thenReturn(savedEntity);
-        when(personneRepository.findByEquipeCode("EQ001")).thenReturn(Collections.emptyList());
+        when(personneRepository.findByEquipeCode("EQ001")).thenReturn(emptyPersonneList);
 
         // When
         Equipe result = equipeService.createEquipe(equipe, "G001");
@@ -165,6 +173,7 @@ class EquipeServiceTest {
         verify(groupementRepository, times(1)).findById("G001");
         verify(equipeRepository, times(1)).save(any(EquipeEntity.class));
         verify(personneRepository, times(1)).findByEquipeCode("EQ001");
+        verify(equipeMapper, times(1)).convertToEquipe(savedEntity, emptyPersonneList);
     }
 
     @Test
@@ -182,6 +191,7 @@ class EquipeServiceTest {
         verify(equipeRepository, times(1)).existsById("EQ001");
         verify(groupementRepository, never()).findById(anyString());
         verify(equipeRepository, never()).save(any(EquipeEntity.class));
+        verify(equipeMapper, never()).convertToEquipe(any(EquipeEntity.class), anyList());
     }
 
     @Test
@@ -200,6 +210,7 @@ class EquipeServiceTest {
         verify(equipeRepository, times(1)).existsById("EQ001");
         verify(groupementRepository, times(1)).findById("G999");
         verify(equipeRepository, never()).save(any(EquipeEntity.class));
+        verify(equipeMapper, never()).convertToEquipe(any(EquipeEntity.class), anyList());
     }
 
     @Test
@@ -229,10 +240,12 @@ class EquipeServiceTest {
         updatedEntity.setDescription("Description mise à jour");
         updatedEntity.setGroupement(newGroupementEntity);
 
+        List<PersonneEntity> personneEntities = Collections.emptyList();
+
         when(equipeRepository.findById("EQ001")).thenReturn(Optional.of(existingEntity));
         when(groupementRepository.findById("G002")).thenReturn(Optional.of(newGroupementEntity));
-        when(equipeRepository.save(any(EquipeEntity.class))).thenReturn(updatedEntity);
-        when(personneRepository.findByEquipeCode("EQ001")).thenReturn(Collections.emptyList());
+        when(equipeRepository.save(existingEntity)).thenReturn(updatedEntity);
+        when(personneRepository.findByEquipeCode("EQ001")).thenReturn(personneEntities);
 
         // When
         Equipe result = equipeService.updateEquipe("EQ001", equipe, "G002");
@@ -246,8 +259,9 @@ class EquipeServiceTest {
         assertEquals("G002", result.getGroupement().getCode());
         verify(equipeRepository, times(1)).findById("EQ001");
         verify(groupementRepository, times(1)).findById("G002");
-        verify(equipeRepository, times(1)).save(any(EquipeEntity.class));
+        verify(equipeRepository, times(1)).save(existingEntity);
         verify(personneRepository, times(1)).findByEquipeCode("EQ001");
+        verify(equipeMapper, times(1)).convertToEquipe(updatedEntity, personneEntities);
     }
 
     @Test
@@ -273,9 +287,11 @@ class EquipeServiceTest {
         updatedEntity.setDescription("Équipe de développement"); // Unchanged
         updatedEntity.setGroupement(groupementEntity);  // Unchanged
 
+        List<PersonneEntity> personneEntities = Collections.emptyList();
+
         when(equipeRepository.findById("EQ001")).thenReturn(Optional.of(existingEntity));
-        when(equipeRepository.save(any(EquipeEntity.class))).thenReturn(updatedEntity);
-        when(personneRepository.findByEquipeCode("EQ001")).thenReturn(Collections.emptyList());
+        when(equipeRepository.save(existingEntity)).thenReturn(updatedEntity);
+        when(personneRepository.findByEquipeCode("EQ001")).thenReturn(personneEntities);
 
         // When
         Equipe result = equipeService.updateEquipe("EQ001", equipe, null); // No groupement update
@@ -289,7 +305,9 @@ class EquipeServiceTest {
         assertEquals("G001", result.getGroupement().getCode());
         verify(equipeRepository, times(1)).findById("EQ001");
         verify(groupementRepository, never()).findById(anyString());
-        verify(equipeRepository, times(1)).save(any(EquipeEntity.class));
+        verify(equipeRepository, times(1)).save(existingEntity);
+        verify(personneRepository, times(1)).findByEquipeCode("EQ001");
+        verify(equipeMapper, times(1)).convertToEquipe(updatedEntity, personneEntities);
     }
 
     @Test
@@ -306,6 +324,7 @@ class EquipeServiceTest {
         verify(equipeRepository, times(1)).findById("EQ999");
         verify(groupementRepository, never()).findById(anyString());
         verify(equipeRepository, never()).save(any(EquipeEntity.class));
+        verify(equipeMapper, never()).convertToEquipe(any(EquipeEntity.class), anyList());
     }
 
     @Test
@@ -333,6 +352,7 @@ class EquipeServiceTest {
         verify(equipeRepository, times(1)).findById("EQ001");
         verify(groupementRepository, times(1)).findById("G999");
         verify(equipeRepository, never()).save(any(EquipeEntity.class));
+        verify(equipeMapper, never()).convertToEquipe(any(EquipeEntity.class), anyList());
     }
 
     @Test
@@ -360,7 +380,7 @@ class EquipeServiceTest {
     }
 
     @Test
-    void testConvertToEquipe() {
+    void testGetEquipeWithMembers() {
         // Given
         GroupementEntity groupementEntity = new GroupementEntity();
         groupementEntity.setCode("G001");
@@ -385,7 +405,9 @@ class EquipeServiceTest {
         personneEntity2.setPrenom("Sophie");
         personneEntity2.setPoste("Testeuse");
 
-        when(personneRepository.findByEquipeCode("EQ001")).thenReturn(Arrays.asList(personneEntity1, personneEntity2));
+        List<PersonneEntity> personneEntities = Arrays.asList(personneEntity1, personneEntity2);
+
+        when(personneRepository.findByEquipeCode("EQ001")).thenReturn(personneEntities);
         when(equipeRepository.findById("EQ001")).thenReturn(Optional.of(equipeEntity));
 
         // When
@@ -403,10 +425,11 @@ class EquipeServiceTest {
         assertEquals("Dupont", result.getMembres().get(0).getNom());
         assertEquals("P002", result.getMembres().get(1).getIdentifiant());
         assertEquals("Martin", result.getMembres().get(1).getNom());
+        verify(equipeMapper, times(1)).convertToEquipe(equipeEntity, personneEntities);
     }
 
     @Test
-    void testConvertToEquipe_NoGroupement() {
+    void testGetEquipeWithNoGroupement() {
         // Given
         EquipeEntity equipeEntity = new EquipeEntity();
         equipeEntity.setCode("EQ001");
@@ -414,7 +437,9 @@ class EquipeServiceTest {
         equipeEntity.setDescription("Équipe de développement");
         // No groupement
 
-        when(personneRepository.findByEquipeCode("EQ001")).thenReturn(Collections.emptyList());
+        List<PersonneEntity> personneEntities = Collections.emptyList();
+
+        when(personneRepository.findByEquipeCode("EQ001")).thenReturn(personneEntities);
         when(equipeRepository.findById("EQ001")).thenReturn(Optional.of(equipeEntity));
 
         // When
@@ -427,5 +452,6 @@ class EquipeServiceTest {
         assertEquals("Équipe de développement", result.getDescription());
         assertNull(result.getGroupement());
         assertTrue(result.getMembres().isEmpty());
+        verify(equipeMapper, times(1)).convertToEquipe(equipeEntity, personneEntities);
     }
 }

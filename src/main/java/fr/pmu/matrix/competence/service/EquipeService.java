@@ -1,11 +1,10 @@
 package fr.pmu.matrix.competence.service;
 
 import fr.pmu.matrix.competence.domain.Equipe;
-import fr.pmu.matrix.competence.domain.Groupement;
-import fr.pmu.matrix.competence.domain.Personne;
 import fr.pmu.matrix.competence.entity.EquipeEntity;
 import fr.pmu.matrix.competence.entity.GroupementEntity;
 import fr.pmu.matrix.competence.entity.PersonneEntity;
+import fr.pmu.matrix.competence.mapper.EquipeMapper;
 import fr.pmu.matrix.competence.repository.EquipeRepository;
 import fr.pmu.matrix.competence.repository.GroupementRepository;
 import fr.pmu.matrix.competence.repository.PersonneRepository;
@@ -25,14 +24,17 @@ public class EquipeService {
     private final EquipeRepository equipeRepository;
     private final GroupementRepository groupementRepository;
     private final PersonneRepository personneRepository;
+    private final EquipeMapper equipeMapper;
 
     @Autowired
     public EquipeService(EquipeRepository equipeRepository, 
                         GroupementRepository groupementRepository,
-                        PersonneRepository personneRepository) {
+                        PersonneRepository personneRepository,
+                        EquipeMapper equipeMapper) {
         this.equipeRepository = equipeRepository;
         this.groupementRepository = groupementRepository;
         this.personneRepository = personneRepository;
+        this.equipeMapper = equipeMapper;
     }
 
     /**
@@ -43,7 +45,10 @@ public class EquipeService {
     public List<Equipe> getAllEquipes() {
         return equipeRepository.findAll()
                 .stream()
-                .map(this::convertToEquipe)
+                .map(entity -> {
+                    List<PersonneEntity> personneEntities = personneRepository.findByEquipeCode(entity.getCode());
+                    return equipeMapper.convertToEquipe(entity, personneEntities);
+                })
                 .collect(Collectors.toList());
     }
 
@@ -57,7 +62,8 @@ public class EquipeService {
     public Equipe getEquipeByCode(String code) {
         EquipeEntity equipeEntity = equipeRepository.findById(code)
                 .orElseThrow(() -> new RuntimeException("Équipe non trouvée avec le code: " + code));
-        return convertToEquipe(equipeEntity);
+        List<PersonneEntity> personneEntities = personneRepository.findByEquipeCode(code);
+        return equipeMapper.convertToEquipe(equipeEntity, personneEntities);
     }
 
     /**
@@ -88,7 +94,8 @@ public class EquipeService {
 
         // Sauvegarder l'équipe
         EquipeEntity savedEntity = equipeRepository.save(equipeEntity);
-        return convertToEquipe(savedEntity);
+        // Pour une nouvelle équipe, il n'y a pas encore de membres
+        return equipeMapper.convertToEquipe(savedEntity, List.of());
     }
 
     /**
@@ -124,7 +131,8 @@ public class EquipeService {
 
         // Sauvegarder les modifications
         EquipeEntity updatedEntity = equipeRepository.save(equipeEntity);
-        return convertToEquipe(updatedEntity);
+        List<PersonneEntity> personneEntities = personneRepository.findByEquipeCode(code);
+        return equipeMapper.convertToEquipe(updatedEntity, personneEntities);
     }
 
     /**
@@ -143,47 +151,5 @@ public class EquipeService {
         // Par exemple, soit les supprimer, soit les détacher de l'équipe
         
         equipeRepository.deleteById(code);
-    }
-
-    /**
-     * Convertit une entité équipe en objet de domaine
-     * 
-     * @param entity Entité équipe
-     * @return Objet de domaine équipe
-     */
-    private Equipe convertToEquipe(EquipeEntity entity) {
-        Equipe equipe = new Equipe();
-        equipe.setCode(entity.getCode());
-        equipe.setNom(entity.getNom());
-        equipe.setDescription(entity.getDescription());
-        
-        // Convertir le groupement
-        if (entity.getGroupement() != null) {
-            GroupementEntity groupementEntity = entity.getGroupement();
-            Groupement groupement = new Groupement();
-            groupement.setCode(groupementEntity.getCode());
-            groupement.setLibelle(groupementEntity.getLibelle());
-            groupement.setDirection(groupementEntity.getDirection());
-            equipe.setGroupement(groupement);
-        }
-        
-        // Charger et convertir les membres de l'équipe
-        List<PersonneEntity> personneEntities = personneRepository.findByEquipeCode(entity.getCode());
-        if (personneEntities != null && !personneEntities.isEmpty()) {
-            List<Personne> membres = personneEntities.stream()
-                    .map(personneEntity -> {
-                        Personne personne = new Personne();
-                        personne.setIdentifiant(personneEntity.getIdentifiant());
-                        personne.setNom(personneEntity.getNom());
-                        personne.setPrenom(personneEntity.getPrenom());
-                        personne.setPoste(personneEntity.getPoste());
-                        // Ne pas inclure l'équipe pour éviter une référence circulaire
-                        return personne;
-                    })
-                    .collect(Collectors.toList());
-            equipe.setMembres(membres);
-        }
-        
-        return equipe;
     }
 }

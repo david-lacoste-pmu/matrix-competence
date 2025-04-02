@@ -3,12 +3,14 @@ package fr.pmu.matrix.competence.service;
 import fr.pmu.matrix.competence.domain.Personne;
 import fr.pmu.matrix.competence.entity.EquipeEntity;
 import fr.pmu.matrix.competence.entity.PersonneEntity;
+import fr.pmu.matrix.competence.mapper.PersonneMapper;
 import fr.pmu.matrix.competence.repository.EquipeRepository;
 import fr.pmu.matrix.competence.repository.PersonneRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Arrays;
@@ -28,6 +30,9 @@ class PersonneServiceTest {
 
     @Mock
     private EquipeRepository equipeRepository;
+    
+    @Spy
+    private PersonneMapper personneMapper = new PersonneMapper();
 
     @InjectMocks
     private PersonneService personneService;
@@ -58,6 +63,7 @@ class PersonneServiceTest {
         assertEquals("P123", result.get(0).getIdentifiant());
         assertEquals("P124", result.get(1).getIdentifiant());
         verify(personneRepository, times(1)).findAll();
+        verify(personneMapper, times(2)).mapToPersonneDomain(any(PersonneEntity.class));
     }
 
     @Test
@@ -89,6 +95,7 @@ class PersonneServiceTest {
         assertNotNull(result.getEquipe());
         assertEquals("E001", result.getEquipe().getCode());
         verify(personneRepository, times(1)).findById("P123");
+        verify(personneMapper, times(1)).mapToPersonneDomain(personneEntity);
     }
 
     @Test
@@ -99,6 +106,7 @@ class PersonneServiceTest {
         // When / Then
         assertThrows(RuntimeException.class, () -> personneService.getPersonneByIdentifiant("P999"));
         verify(personneRepository, times(1)).findById("P999");
+        verify(personneMapper, never()).mapToPersonneDomain(any(PersonneEntity.class));
     }
 
     @Test
@@ -110,6 +118,12 @@ class PersonneServiceTest {
         personne.setPrenom("Jean");
         personne.setPoste("Développeur");
 
+        PersonneEntity personneEntity = new PersonneEntity();
+        personneEntity.setIdentifiant("P123");
+        personneEntity.setNom("Dupont");
+        personneEntity.setPrenom("Jean");
+        personneEntity.setPoste("Développeur");
+
         PersonneEntity savedEntity = new PersonneEntity();
         savedEntity.setIdentifiant("P123");
         savedEntity.setNom("Dupont");
@@ -117,7 +131,8 @@ class PersonneServiceTest {
         savedEntity.setPoste("Développeur");
 
         when(personneRepository.existsById(anyString())).thenReturn(false);
-        when(personneRepository.save(any(PersonneEntity.class))).thenReturn(savedEntity);
+        when(personneMapper.mapToPersonneEntity(personne)).thenReturn(personneEntity);
+        when(personneRepository.save(personneEntity)).thenReturn(savedEntity);
 
         // When
         Personne result = personneService.createPersonne(personne, null);
@@ -126,7 +141,9 @@ class PersonneServiceTest {
         assertNotNull(result);
         assertEquals("P123", result.getIdentifiant());
         assertEquals("Dupont", result.getNom());
-        verify(personneRepository, times(1)).save(any(PersonneEntity.class));
+        verify(personneMapper, times(1)).mapToPersonneEntity(personne);
+        verify(personneRepository, times(1)).save(personneEntity);
+        verify(personneMapper, times(1)).mapToPersonneDomain(savedEntity);
         verify(equipeRepository, never()).findById(anyString());
     }
 
@@ -138,6 +155,12 @@ class PersonneServiceTest {
         personne.setNom("Dupont");
         personne.setPrenom("Jean");
         personne.setPoste("Développeur");
+
+        PersonneEntity personneEntity = new PersonneEntity();
+        personneEntity.setIdentifiant("P123");
+        personneEntity.setNom("Dupont");
+        personneEntity.setPrenom("Jean");
+        personneEntity.setPoste("Développeur");
 
         EquipeEntity equipeEntity = new EquipeEntity();
         equipeEntity.setCode("E001");
@@ -152,8 +175,9 @@ class PersonneServiceTest {
         savedEntity.setEquipe(equipeEntity);
 
         when(personneRepository.existsById(anyString())).thenReturn(false);
+        when(personneMapper.mapToPersonneEntity(personne)).thenReturn(personneEntity);
         when(equipeRepository.findById("E001")).thenReturn(Optional.of(equipeEntity));
-        when(personneRepository.save(any(PersonneEntity.class))).thenReturn(savedEntity);
+        when(personneRepository.save(personneEntity)).thenReturn(savedEntity);
 
         // When
         Personne result = personneService.createPersonne(personne, "E001");
@@ -163,7 +187,9 @@ class PersonneServiceTest {
         assertEquals("P123", result.getIdentifiant());
         assertNotNull(result.getEquipe());
         assertEquals("E001", result.getEquipe().getCode());
-        verify(personneRepository, times(1)).save(any(PersonneEntity.class));
+        verify(personneMapper, times(1)).mapToPersonneEntity(personne);
+        verify(personneRepository, times(1)).save(personneEntity);
+        verify(personneMapper, times(1)).mapToPersonneDomain(savedEntity);
         verify(equipeRepository, times(1)).findById("E001");
     }
 
@@ -176,12 +202,21 @@ class PersonneServiceTest {
         personne.setPrenom("Jean");
         personne.setPoste("Développeur");
 
+        PersonneEntity personneEntity = new PersonneEntity();
+        personneEntity.setIdentifiant("P123");
+        personneEntity.setNom("Dupont");
+        personneEntity.setPrenom("Jean");
+        personneEntity.setPoste("Développeur");
+
         when(personneRepository.existsById(anyString())).thenReturn(false);
+        when(personneMapper.mapToPersonneEntity(personne)).thenReturn(personneEntity);
         when(equipeRepository.findById("E999")).thenReturn(Optional.empty());
 
         // When / Then
         assertThrows(RuntimeException.class, () -> personneService.createPersonne(personne, "E999"));
+        verify(personneMapper, times(1)).mapToPersonneEntity(personne);
         verify(personneRepository, never()).save(any(PersonneEntity.class));
+        verify(personneMapper, never()).mapToPersonneDomain(any(PersonneEntity.class));
         verify(equipeRepository, times(1)).findById("E999");
     }
 
@@ -198,7 +233,9 @@ class PersonneServiceTest {
 
         // When / Then
         assertThrows(RuntimeException.class, () -> personneService.createPersonne(personne, null));
+        verify(personneMapper, never()).mapToPersonneEntity(any(Personne.class));
         verify(personneRepository, never()).save(any(PersonneEntity.class));
+        verify(personneMapper, never()).mapToPersonneDomain(any(PersonneEntity.class));
     }
 
     @Test
@@ -221,7 +258,7 @@ class PersonneServiceTest {
         updateData.setPoste("Chef de Projet");
 
         when(personneRepository.findById("P123")).thenReturn(Optional.of(existingEntity));
-        when(personneRepository.save(any(PersonneEntity.class))).thenReturn(updatedEntity);
+        when(personneRepository.save(existingEntity)).thenReturn(updatedEntity);
 
         // When
         Personne result = personneService.updatePersonne("P123", updateData, null);
@@ -233,7 +270,8 @@ class PersonneServiceTest {
         assertEquals("Pierre", result.getPrenom());
         assertEquals("Chef de Projet", result.getPoste());
         verify(personneRepository, times(1)).findById("P123");
-        verify(personneRepository, times(1)).save(any(PersonneEntity.class));
+        verify(personneRepository, times(1)).save(existingEntity);
+        verify(personneMapper, times(1)).mapToPersonneDomain(updatedEntity);
     }
 
     @Test
@@ -259,7 +297,7 @@ class PersonneServiceTest {
 
         when(personneRepository.findById("P123")).thenReturn(Optional.of(existingEntity));
         when(equipeRepository.findById("E002")).thenReturn(Optional.of(newEquipeEntity));
-        when(personneRepository.save(any(PersonneEntity.class))).thenReturn(updatedEntity);
+        when(personneRepository.save(existingEntity)).thenReturn(updatedEntity);
 
         // When
         Personne result = personneService.updatePersonne("P123", updateData, "E002");
@@ -271,7 +309,8 @@ class PersonneServiceTest {
         assertEquals("E002", result.getEquipe().getCode());
         verify(personneRepository, times(1)).findById("P123");
         verify(equipeRepository, times(1)).findById("E002");
-        verify(personneRepository, times(1)).save(any(PersonneEntity.class));
+        verify(personneRepository, times(1)).save(existingEntity);
+        verify(personneMapper, times(1)).mapToPersonneDomain(updatedEntity);
     }
 
     @Test
@@ -298,7 +337,7 @@ class PersonneServiceTest {
         Personne updateData = new Personne();
 
         when(personneRepository.findById("P123")).thenReturn(Optional.of(existingEntity));
-        when(personneRepository.save(any(PersonneEntity.class))).thenReturn(updatedEntity);
+        when(personneRepository.save(existingEntity)).thenReturn(updatedEntity);
 
         // When
         Personne result = personneService.updatePersonne("P123", updateData, "");
@@ -308,7 +347,8 @@ class PersonneServiceTest {
         assertEquals("P123", result.getIdentifiant());
         assertNull(result.getEquipe());
         verify(personneRepository, times(1)).findById("P123");
-        verify(personneRepository, times(1)).save(any(PersonneEntity.class));
+        verify(personneRepository, times(1)).save(existingEntity);
+        verify(personneMapper, times(1)).mapToPersonneDomain(updatedEntity);
     }
 
     @Test
@@ -323,6 +363,7 @@ class PersonneServiceTest {
         });
         verify(personneRepository, times(1)).findById("P999");
         verify(personneRepository, never()).save(any(PersonneEntity.class));
+        verify(personneMapper, never()).mapToPersonneDomain(any(PersonneEntity.class));
     }
 
     @Test

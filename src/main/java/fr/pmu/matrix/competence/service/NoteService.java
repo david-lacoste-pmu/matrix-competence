@@ -2,6 +2,7 @@ package fr.pmu.matrix.competence.service;
 
 import fr.pmu.matrix.competence.domain.Note;
 import fr.pmu.matrix.competence.entity.NoteEntity;
+import fr.pmu.matrix.competence.mapper.NoteMapper;
 import fr.pmu.matrix.competence.repository.NoteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,10 +18,12 @@ import java.util.stream.Collectors;
 public class NoteService {
 
     private final NoteRepository noteRepository;
+    private final NoteMapper noteMapper;
 
     @Autowired
-    public NoteService(NoteRepository noteRepository) {
+    public NoteService(NoteRepository noteRepository, NoteMapper noteMapper) {
         this.noteRepository = noteRepository;
+        this.noteMapper = noteMapper;
     }
 
     /**
@@ -31,7 +34,7 @@ public class NoteService {
     public List<Note> getAllNotes() {
         return noteRepository.findAll()
                 .stream()
-                .map(this::convertToNote)
+                .map(noteMapper::mapToNoteDomain)
                 .collect(Collectors.toList());
     }
 
@@ -45,7 +48,7 @@ public class NoteService {
     public Note getNoteByValeur(int valeur) {
         NoteEntity noteEntity = noteRepository.findById(valeur)
                 .orElseThrow(() -> new RuntimeException("Note non trouvée avec la valeur: " + valeur));
-        return convertToNote(noteEntity);
+        return noteMapper.mapToNoteDomain(noteEntity);
     }
 
     /**
@@ -61,12 +64,9 @@ public class NoteService {
             throw new RuntimeException("Une note avec la valeur " + note.getValeur() + " existe déjà");
         }
 
-        NoteEntity noteEntity = new NoteEntity();
-        noteEntity.setValeur(note.getValeur());
-        noteEntity.setLibelle(note.getLibelle());
-
+        NoteEntity noteEntity = noteMapper.mapToNoteEntity(note);
         NoteEntity savedEntity = noteRepository.save(noteEntity);
-        return convertToNote(savedEntity);
+        return noteMapper.mapToNoteDomain(savedEntity);
     }
 
     /**
@@ -88,7 +88,7 @@ public class NoteService {
         }
 
         NoteEntity updatedEntity = noteRepository.save(noteEntity);
-        return convertToNote(updatedEntity);
+        return noteMapper.mapToNoteDomain(updatedEntity);
     }
 
     /**
@@ -103,18 +103,5 @@ public class NoteService {
             throw new RuntimeException("Note non trouvée avec la valeur: " + valeur);
         }
         noteRepository.deleteById(valeur);
-    }
-
-    /**
-     * Convertit une entité note en objet de domaine
-     *
-     * @param entity Entité note
-     * @return Objet de domaine note
-     */
-    private Note convertToNote(NoteEntity entity) {
-        Note note = new Note();
-        note.setValeur(entity.getValeur());
-        note.setLibelle(entity.getLibelle());
-        return note;
     }
 }

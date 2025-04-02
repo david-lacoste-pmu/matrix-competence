@@ -2,6 +2,7 @@ package fr.pmu.matrix.competence.service;
 
 import fr.pmu.matrix.competence.domain.Groupement;
 import fr.pmu.matrix.competence.entity.GroupementEntity;
+import fr.pmu.matrix.competence.mapper.GroupementMapper;
 import fr.pmu.matrix.competence.repository.GroupementRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,10 +15,12 @@ import java.util.stream.Collectors;
 public class GroupementService {
 
     private final GroupementRepository groupementRepository;
+    private final GroupementMapper groupementMapper;
 
     @Autowired
-    public GroupementService(GroupementRepository groupementRepository) {
+    public GroupementService(GroupementRepository groupementRepository, GroupementMapper groupementMapper) {
         this.groupementRepository = groupementRepository;
+        this.groupementMapper = groupementMapper;
     }
 
     /**
@@ -27,7 +30,7 @@ public class GroupementService {
     public List<Groupement> getAllGroupements() {
         return groupementRepository.findAll()
                 .stream()
-                .map(this::mapToGroupementDomain)
+                .map(groupementMapper::mapToGroupementDomainSansEquipes)
                 .collect(Collectors.toList());
     }
 
@@ -38,7 +41,7 @@ public class GroupementService {
      */
     public Groupement getGroupementByCode(String code) {
         return groupementRepository.findById(code)
-                .map(this::mapToGroupementDomain)
+                .map(groupementMapper::mapToGroupementDomain)
                 .orElseThrow(() -> new RuntimeException("Groupement non trouvé avec le code: " + code));
     }
 
@@ -54,13 +57,9 @@ public class GroupementService {
             throw new RuntimeException("Un groupement avec ce code existe déjà: " + groupement.getCode());
         }
         
-        GroupementEntity groupementEntity = new GroupementEntity();
-        groupementEntity.setCode(groupement.getCode());
-        groupementEntity.setLibelle(groupement.getLibelle());
-        groupementEntity.setDirection(groupement.getDirection());
-        
+        GroupementEntity groupementEntity = groupementMapper.mapToGroupementEntity(groupement);
         groupementEntity = groupementRepository.save(groupementEntity);
-        return mapToGroupementDomain(groupementEntity);
+        return groupementMapper.mapToGroupementDomainSansEquipes(groupementEntity);
     }
 
     /**
@@ -83,7 +82,7 @@ public class GroupementService {
         }
         
         groupementEntity = groupementRepository.save(groupementEntity);
-        return mapToGroupementDomain(groupementEntity);
+        return groupementMapper.mapToGroupementDomain(groupementEntity);
     }
 
     /**
@@ -96,18 +95,5 @@ public class GroupementService {
             throw new RuntimeException("Groupement non trouvé avec le code: " + code);
         }
         groupementRepository.deleteById(code);
-    }
-
-    /**
-     * Convertit une entité groupement en objet domain
-     * @param entity L'entité à convertir
-     * @return L'objet domain correspondant
-     */
-    private Groupement mapToGroupementDomain(GroupementEntity entity) {
-        Groupement groupement = new Groupement();
-        groupement.setCode(entity.getCode());
-        groupement.setLibelle(entity.getLibelle());
-        groupement.setDirection(entity.getDirection());
-        return groupement;
     }
 }
