@@ -27,6 +27,14 @@ public class EquipeEntity {
     @JoinColumn(name = "groupement_code")
     private GroupementEntity groupement;
     
-    @OneToMany(mappedBy = "equipe", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "equipe", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PersonneEntity> membres = new ArrayList<>();
+    
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinTable(
+        name = "equipe_profil_recherche",
+        joinColumns = @JoinColumn(name = "equipe_code"),
+        inverseJoinColumns = @JoinColumn(name = "competence_requise_id")
+    )
+    private List<CompetenceRequiseEntity> profilRecherche = new ArrayList<>();
 }

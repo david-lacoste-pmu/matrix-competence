@@ -16,4 +16,5 @@ public class Equipe {
     private String description;
     private Groupement groupement;
     private List<Personne> membres = new ArrayList<>();
+    private List<CompetenceRequise> profilRecherche = new ArrayList<>();
 }

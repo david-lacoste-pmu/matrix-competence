@@ -3,7 +3,12 @@ package fr.pmu.matrix.competence.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.pmu.matrix.competence.domain.Equipe;
 import fr.pmu.matrix.competence.domain.Groupement;
+import fr.pmu.matrix.competence.dto.CompetenceRequiseDto;
+import fr.pmu.matrix.competence.dto.CreateEquipeRequest;
+import fr.pmu.matrix.competence.dto.UpdateEquipeRequest;
+import fr.pmu.matrix.competence.service.CompetenceService;
 import fr.pmu.matrix.competence.service.EquipeService;
+import fr.pmu.matrix.competence.service.NoteService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -31,6 +36,12 @@ class EquipeControllerTest {
 
     @MockBean
     private EquipeService equipeService;
+    
+    @MockBean
+    private CompetenceService competenceService;
+    
+    @MockBean
+    private NoteService noteService;
 
     @Test
     void testGetAllEquipes() throws Exception {
@@ -112,7 +123,7 @@ class EquipeControllerTest {
     @Test
     void testCreateEquipe() throws Exception {
         // Given
-        EquipeController.CreateEquipeRequest request = new EquipeController.CreateEquipeRequest();
+        CreateEquipeRequest request = new CreateEquipeRequest();
         request.setCode("EQ001");
         request.setNom("Équipe Dev");
         request.setDescription("Équipe de développement");
@@ -147,7 +158,7 @@ class EquipeControllerTest {
     @Test
     void testCreateEquipe_AlreadyExists() throws Exception {
         // Given
-        EquipeController.CreateEquipeRequest request = new EquipeController.CreateEquipeRequest();
+        CreateEquipeRequest request = new CreateEquipeRequest();
         request.setCode("EQ001");
         request.setNom("Équipe Dev");
         request.setDescription("Équipe de développement");
@@ -168,7 +179,7 @@ class EquipeControllerTest {
     @Test
     void testUpdateEquipe() throws Exception {
         // Given
-        EquipeController.UpdateEquipeRequest request = new EquipeController.UpdateEquipeRequest();
+        UpdateEquipeRequest request = new UpdateEquipeRequest();
         request.setNom("Équipe Development");
         request.setDescription("Équipe de développement modifiée");
         request.setGroupementCode("G002");
@@ -202,7 +213,7 @@ class EquipeControllerTest {
     @Test
     void testUpdateEquipe_NotFound() throws Exception {
         // Given
-        EquipeController.UpdateEquipeRequest request = new EquipeController.UpdateEquipeRequest();
+        UpdateEquipeRequest request = new UpdateEquipeRequest();
         request.setNom("Équipe Development");
         request.setDescription("Équipe de développement modifiée");
         request.setGroupementCode("G002");
@@ -259,7 +270,7 @@ class EquipeControllerTest {
     @Test
     void testServerError_CreateEquipe() throws Exception {
         // Given
-        EquipeController.CreateEquipeRequest request = new EquipeController.CreateEquipeRequest();
+        CreateEquipeRequest request = new CreateEquipeRequest();
         request.setCode("EQ001");
         request.setNom("Équipe Dev");
         request.setDescription("Équipe de développement");
@@ -273,5 +284,74 @@ class EquipeControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isInternalServerError());
+    }
+    
+    @Test
+    void testGetProfilRecherche() throws Exception {
+        // Given
+        when(equipeService.getProfilRecherche("EQ001")).thenReturn(Collections.emptyList());
+
+        // When & Then
+        mockMvc.perform(get("/equipes/EQ001/profil-recherche")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray());
+
+        verify(equipeService, times(1)).getProfilRecherche("EQ001");
+    }
+    
+    @Test
+    void testUpdateProfilRecherche() throws Exception {
+        // Given
+        List<CompetenceRequiseDto> dtos = Collections.emptyList();
+        Equipe updatedEquipe = new Equipe();
+        updatedEquipe.setCode("EQ001");
+        
+        when(equipeService.updateProfilRecherche(eq("EQ001"), anyList())).thenReturn(updatedEquipe);
+
+        // When & Then
+        mockMvc.perform(put("/equipes/EQ001/profil-recherche")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dtos)))
+                .andExpect(status().isOk());
+                
+        verify(equipeService, times(1)).updateProfilRecherche(eq("EQ001"), anyList());
+    }
+    
+    @Test
+    void testAddCompetenceRequiseToProfilRecherche() throws Exception {
+        // Given
+        CompetenceRequiseDto dto = new CompetenceRequiseDto();
+        dto.setCompetenceLibelle("JAVA");
+        dto.setNoteValeur(4);
+        
+        Equipe updatedEquipe = new Equipe();
+        updatedEquipe.setCode("EQ001");
+        
+        when(equipeService.addCompetenceRequiseToProfilRecherche(eq("EQ001"), any())).thenReturn(updatedEquipe);
+
+        // When & Then
+        mockMvc.perform(post("/equipes/EQ001/profil-recherche")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isCreated());
+                
+        verify(equipeService, times(1)).addCompetenceRequiseToProfilRecherche(eq("EQ001"), any());
+    }
+    
+    @Test
+    void testRemoveCompetenceRequiseFromProfilRecherche() throws Exception {
+        // Given
+        Equipe updatedEquipe = new Equipe();
+        updatedEquipe.setCode("EQ001");
+        
+        when(equipeService.removeCompetenceRequiseFromProfilRecherche("EQ001", "JAVA")).thenReturn(updatedEquipe);
+
+        // When & Then
+        mockMvc.perform(delete("/equipes/EQ001/profil-recherche/JAVA")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+                
+        verify(equipeService, times(1)).removeCompetenceRequiseFromProfilRecherche("EQ001", "JAVA");
     }
 }

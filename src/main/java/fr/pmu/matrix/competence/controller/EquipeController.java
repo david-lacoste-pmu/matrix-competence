@@ -1,13 +1,21 @@
 package fr.pmu.matrix.competence.controller;
 
+import fr.pmu.matrix.competence.domain.CompetenceRequise;
 import fr.pmu.matrix.competence.domain.Equipe;
+import fr.pmu.matrix.competence.dto.CompetenceRequiseDto;
+import fr.pmu.matrix.competence.dto.CreateEquipeRequest;
+import fr.pmu.matrix.competence.dto.UpdateEquipeRequest;
+import fr.pmu.matrix.competence.service.CompetenceService;
 import fr.pmu.matrix.competence.service.EquipeService;
+import fr.pmu.matrix.competence.service.NoteService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -19,10 +27,16 @@ import java.util.List;
 public class EquipeController {
 
     private final EquipeService equipeService;
+    private final CompetenceService competenceService;
+    private final NoteService noteService;
 
     @Autowired
-    public EquipeController(EquipeService equipeService) {
+    public EquipeController(EquipeService equipeService, 
+                           CompetenceService competenceService,
+                           NoteService noteService) {
         this.equipeService = equipeService;
+        this.competenceService = competenceService;
+        this.noteService = noteService;
     }
 
     /**
@@ -74,6 +88,17 @@ public class EquipeController {
             equipe.setCode(request.getCode());
             equipe.setNom(request.getNom());
             equipe.setDescription(request.getDescription());
+            
+            // Traitement du profil de recherche si présent
+            if (request.getProfilRecherche() != null && !request.getProfilRecherche().isEmpty()) {
+                List<CompetenceRequise> competencesRequises = new ArrayList<>();
+                for (CompetenceRequiseDto dto : request.getProfilRecherche()) {
+                    var competence = competenceService.getCompetenceByLibelle(dto.getCompetenceLibelle());
+                    var note = noteService.getNoteByValeur(dto.getNoteValeur());
+                    competencesRequises.add(new CompetenceRequise(competence, note));
+                }
+                equipe.setProfilRecherche(competencesRequises);
+            }
 
             Equipe createdEquipe = equipeService.createEquipe(equipe, request.getGroupementCode());
             return new ResponseEntity<>(createdEquipe, HttpStatus.CREATED);
@@ -101,6 +126,17 @@ public class EquipeController {
             equipe.setCode(code);
             equipe.setNom(request.getNom());
             equipe.setDescription(request.getDescription());
+            
+            // Traitement du profil de recherche si présent
+            if (request.getProfilRecherche() != null) {
+                List<CompetenceRequise> competencesRequises = new ArrayList<>();
+                for (CompetenceRequiseDto dto : request.getProfilRecherche()) {
+                    var competence = competenceService.getCompetenceByLibelle(dto.getCompetenceLibelle());
+                    var note = noteService.getNoteByValeur(dto.getNoteValeur());
+                    competencesRequises.add(new CompetenceRequise(competence, note));
+                }
+                equipe.setProfilRecherche(competencesRequises);
+            }
 
             Equipe updatedEquipe = equipeService.updateEquipe(code, equipe, request.getGroupementCode());
             return ResponseEntity.ok(updatedEquipe);
@@ -129,81 +165,110 @@ public class EquipeController {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erreur lors de la suppression de l'équipe", e);
         }
     }
-
+    
     /**
-     * Classe pour la requête de création d'une équipe
-     * Correspond au schéma CreateEquipeRequest dans l'API
+     * Récupère le profil de recherche d'une équipe
+     * 
+     * @param code Code de l'équipe
+     * @return Liste des compétences requises
      */
-    public static class CreateEquipeRequest {
-        private String code;
-        private String nom;
-        private String description;
-        private String groupementCode;
-
-        public String getCode() {
-            return code;
-        }
-
-        public void setCode(String code) {
-            this.code = code;
-        }
-
-        public String getNom() {
-            return nom;
-        }
-
-        public void setNom(String nom) {
-            this.nom = nom;
-        }
-
-        public String getDescription() {
-            return description;
-        }
-
-        public void setDescription(String description) {
-            this.description = description;
-        }
-
-        public String getGroupementCode() {
-            return groupementCode;
-        }
-
-        public void setGroupementCode(String groupementCode) {
-            this.groupementCode = groupementCode;
+    @GetMapping("/{code}/profil-recherche")
+    public ResponseEntity<List<CompetenceRequise>> getProfilRecherche(@PathVariable String code) {
+        try {
+            List<CompetenceRequise> profil = equipeService.getProfilRecherche(code);
+            return ResponseEntity.ok(profil);
+        } catch (RuntimeException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage(), e);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erreur lors de la récupération du profil", e);
         }
     }
-
+    
     /**
-     * Classe pour la requête de mise à jour d'une équipe
-     * Correspond au schéma UpdateEquipeRequest dans l'API
+     * Met à jour le profil de recherche d'une équipe
+     * 
+     * @param code Code de l'équipe
+     * @param dtos Liste des compétences requises en DTO
+     * @return Équipe mise à jour
      */
-    public static class UpdateEquipeRequest {
-        private String nom;
-        private String description;
-        private String groupementCode;
-
-        public String getNom() {
-            return nom;
+    @PutMapping("/{code}/profil-recherche")
+    public ResponseEntity<Equipe> updateProfilRecherche(
+            @PathVariable String code,
+            @RequestBody List<CompetenceRequiseDto> dtos) {
+        try {
+            List<CompetenceRequise> competencesRequises = new ArrayList<>();
+            for (CompetenceRequiseDto dto : dtos) {
+                var competence = competenceService.getCompetenceByLibelle(dto.getCompetenceLibelle());
+                var note = noteService.getNoteByValeur(dto.getNoteValeur());
+                competencesRequises.add(new CompetenceRequise(competence, note));
+            }
+            
+            Equipe updatedEquipe = equipeService.updateProfilRecherche(code, competencesRequises);
+            return ResponseEntity.ok(updatedEquipe);
+        } catch (RuntimeException e) {
+            if (e.getMessage().contains("trouvée")) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage(), e);
+            } else {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+            }
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erreur lors de la mise à jour du profil", e);
         }
-
-        public void setNom(String nom) {
-            this.nom = nom;
+    }
+    
+    /**
+     * Ajoute une compétence requise au profil de recherche
+     * 
+     * @param code Code de l'équipe
+     * @param dto DTO de la compétence requise
+     * @return Équipe mise à jour
+     */
+    @PostMapping("/{code}/profil-recherche")
+    public ResponseEntity<Equipe> addCompetenceRequiseToProfilRecherche(
+            @PathVariable String code,
+            @RequestBody CompetenceRequiseDto dto) {
+        try {
+            var competence = competenceService.getCompetenceByLibelle(dto.getCompetenceLibelle());
+            var note = noteService.getNoteByValeur(dto.getNoteValeur());
+            CompetenceRequise competenceRequise = new CompetenceRequise(competence, note);
+            
+            Equipe updatedEquipe = equipeService.addCompetenceRequiseToProfilRecherche(code, competenceRequise);
+            return ResponseEntity.status(HttpStatus.CREATED).body(updatedEquipe);
+        } catch (RuntimeException e) {
+            if (e.getMessage().contains("trouvée")) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage(), e);
+            } else if (e.getMessage().contains("déjà partie")) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage(), e);
+            } else {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+            }
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erreur lors de l'ajout au profil", e);
         }
-
-        public String getDescription() {
-            return description;
-        }
-
-        public void setDescription(String description) {
-            this.description = description;
-        }
-
-        public String getGroupementCode() {
-            return groupementCode;
-        }
-
-        public void setGroupementCode(String groupementCode) {
-            this.groupementCode = groupementCode;
+    }
+    
+    /**
+     * Supprime une compétence requise du profil de recherche
+     * 
+     * @param code Code de l'équipe
+     * @param competenceLibelle Libellé de la compétence
+     * @return Équipe mise à jour
+     */
+    @DeleteMapping("/{code}/profil-recherche/{competenceLibelle}")
+    public ResponseEntity<Equipe> removeCompetenceRequiseFromProfilRecherche(
+            @PathVariable String code,
+            @PathVariable String competenceLibelle) {
+        try {
+            Equipe updatedEquipe = equipeService.removeCompetenceRequiseFromProfilRecherche(code, competenceLibelle);
+            return ResponseEntity.ok(updatedEquipe);
+        } catch (RuntimeException e) {
+            if (e.getMessage().contains("trouvée")) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage(), e);
+            } else {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+            }
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erreur lors de la suppression du profil", e);
         }
     }
 }

@@ -95,6 +95,108 @@ paths:
         '204':
           description: Équipe supprimée avec succès
 
+  /equipes/{code}/profil-recherche:
+    parameters:
+      - name: code
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Code unique de l'équipe
+        
+    get:
+      summary: Récupérer le profil de recherche d'une équipe
+      operationId: getProfilRecherche
+      tags:
+        - Equipes
+      responses:
+        '200':
+          description: Profil de recherche récupéré avec succès
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CompetenceRequise'
+        '404':
+          description: Équipe non trouvée
+          
+    put:
+      summary: Mettre à jour le profil de recherche d'une équipe
+      operationId: updateProfilRecherche
+      tags:
+        - Equipes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/CompetenceRequiseDto'
+      responses:
+        '200':
+          description: Profil de recherche mis à jour avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Equipe'
+        '404':
+          description: Équipe ou compétence non trouvée
+          
+    post:
+      summary: Ajouter une compétence au profil de recherche
+      operationId: addCompetenceRequiseToProfilRecherche
+      tags:
+        - Equipes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompetenceRequiseDto'
+      responses:
+        '201':
+          description: Compétence ajoutée au profil avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Equipe'
+        '404':
+          description: Équipe ou compétence non trouvée
+        '409':
+          description: La compétence est déjà dans le profil
+          
+  /equipes/{code}/profil-recherche/{competenceLibelle}:
+    parameters:
+      - name: code
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Code unique de l'équipe
+      - name: competenceLibelle
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Libellé de la compétence
+        
+    delete:
+      summary: Supprimer une compétence du profil de recherche
+      operationId: removeCompetenceRequiseFromProfilRecherche
+      tags:
+        - Equipes
+      responses:
+        '200':
+          description: Compétence supprimée du profil avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Equipe'
+        '404':
+          description: Équipe ou compétence non trouvée
+        
 components:
   schemas:
     Equipe:
@@ -119,6 +221,11 @@ components:
           items:
             $ref: '#/components/schemas/Personne'
           description: Liste des membres de l'équipe
+        profilRecherche:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompetenceRequise'
+          description: Profil de recherche de l'équipe (compétences souhaitées)
       required:
         - code
         - nom
@@ -142,6 +249,11 @@ components:
           type: string
           description: Code du groupement auquel l'équipe appartient
           example: "G001"
+        profilRecherche:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompetenceRequiseDto'
+          description: Profil de recherche de l'équipe
       required:
         - code
         - nom
@@ -162,6 +274,11 @@ components:
           type: string
           description: Code du groupement auquel l'équipe appartient
           example: "G002"
+        profilRecherche:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompetenceRequiseDto'
+          description: Profil de recherche de l'équipe à mettre à jour
 
     Groupement:
       type: object
@@ -206,3 +323,58 @@ components:
         - identifiant
         - nom
         - prenom
+        
+    CompetenceRequise:
+      type: object
+      properties:
+        competence:
+          $ref: '#/components/schemas/Competence'
+        noteRequise:
+          $ref: '#/components/schemas/Note'
+      required:
+        - competence
+        - noteRequise
+        
+    CompetenceRequiseDto:
+      type: object
+      properties:
+        competenceLibelle:
+          type: string
+          description: Libellé de la compétence
+          example: "JAVA"
+        noteValeur:
+          type: integer
+          description: Valeur de la note requise
+          example: 4
+      required:
+        - competenceLibelle
+        - noteValeur
+        
+    Competence:
+      type: object
+      properties:
+        libelle:
+          type: string
+          description: Libellé unique de la compétence
+          example: "JAVA"
+        description:
+          type: string
+          description: Description de la compétence
+          example: "Programmation Java"
+      required:
+        - libelle
+        
+    Note:
+      type: object
+      properties:
+        valeur:
+          type: integer
+          description: Valeur numérique de la note
+          example: 4
+        libelle:
+          type: string
+          description: Libellé de la note
+          example: "Avancé"
+      required:
+        - valeur
+        - libelle
