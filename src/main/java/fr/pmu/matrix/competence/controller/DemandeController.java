@@ -51,7 +51,9 @@ public class DemandeController {
     }
 
     /**
-     * Liste toutes les demandes avec filtres optionnels
+     * Liste toutes les demandes avec filtres optionnels.
+     * Sans paramètre, retourne toutes les demandes.
+     * Avec le paramètre matricule, retourne les demandes d'un demandeur spécifique.
      */
     @GetMapping
     public ResponseEntity<List<Demande>> getAllDemandes(
@@ -101,7 +103,21 @@ public class DemandeController {
     }
 
     /**
-     * Récupère une demande par son ID
+     * Récupère les demandes d'un demandeur par son matricule
+     */
+    @GetMapping("/demandeur/{matricule}")
+    public ResponseEntity<List<Demande>> getDemandesByDemandeur(@PathVariable String matricule) {
+        try {
+            List<Demande> demandes = demandeService.getDemandesByDemandeur(matricule);
+            return ResponseEntity.ok(demandes);
+        } catch (RuntimeException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, 
+                    "Aucune demande trouvée pour le demandeur: " + matricule);
+        }
+    }
+
+    /**
+     * Récupère une demande par son ID (conservé pour compatibilité)
      */
     @GetMapping("/{id}")
     public ResponseEntity<Demande> getDemandeById(@PathVariable String id) {

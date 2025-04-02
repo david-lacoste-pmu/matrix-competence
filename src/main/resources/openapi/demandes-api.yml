@@ -9,7 +9,7 @@ info:
     name: PMU Matrix API Support
     email: support@pmu-matrix.com
 servers:
-  - url: 'http://localhost:8080'
+  - url: /api/v1
 tags:
   - name: demandes
     description: Opérations relatives aux demandes de compétences
@@ -125,6 +125,42 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /demandes/demandeur/{matricule}:
+    get:
+      tags:
+        - demandes
+      summary: Récupère les demandes d'un demandeur par son matricule
+      description: Retourne la liste des demandes faites par un demandeur spécifique
+      operationId: getDemandesByDemandeur
+      parameters:
+        - name: matricule
+          in: path
+          description: Matricule du demandeur
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Opération réussie
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Demande'
+        '404':
+          description: Aucune demande trouvée pour ce demandeur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erreur serveur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /demandes/search:
     get:
       tags:
@@ -184,7 +220,7 @@ paths:
       tags:
         - demandes
       summary: Récupère une demande par son ID
-      description: Retourne les détails d'une demande spécifique
+      description: Retourne les détails d'une demande spécifique (conservé pour compatibilité)
       operationId: getDemandeById
       parameters:
         - name: id
